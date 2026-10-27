@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script src="https://delcdata.github.io/DELCAppsHub/shared-auth.js?v=3"></script>
+<title>delcPEOPLE</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}
+
+/* Layout: navy app bar + white working cards on a cool gray ground; Sunday-first (one room, one day) with records behind tabs */
+:root{
+  --navy:#1B3254; --navy-2:#26446f; --gold:#C8973A; --delc-green:#84c225; --gold-soft:#f6ecd9;
+  --bg:#eef1f6; --card:#ffffff; --ink:#18233a; --muted:#5d6a82; --line:#dbe1ea; --soft:#f5f7fb;
+  --ok:#1f7a4a; --ok-soft:#e3f4ea; --warn:#a15c00; --warn-soft:#fff2db; --bad:#b4232c; --bad-soft:#fde8ea; --info:#1f4f9c; --info-soft:#e6eefb;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif; --body:"Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f1624;--card:#172133;--ink:#e6ebf4;--muted:#9aa7bd;--line:#2a3750;--soft:#1c2840;--gold-soft:#3a2f1a;--ok:#5cc88d;--ok-soft:#173526;--warn:#f0b057;--warn-soft:#3a2b12;--bad:#ff7d86;--bad-soft:#3d1a1f;--info:#8db4ff;--info-soft:#1a2a47;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1624;--card:#172133;--ink:#e6ebf4;--muted:#9aa7bd;--line:#2a3750;--soft:#1c2840;--gold-soft:#3a2f1a;--ok:#5cc88d;--ok-soft:#173526;--warn:#f0b057;--warn-soft:#3a2b12;--bad:#ff7d86;--bad-soft:#3d1a1f;--info:#8db4ff;--info-soft:#1a2a47;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--navy)}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+/* app bar */
+.bar{background:var(--navy);color:#fff;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.bar .wrap{display:flex;align-items:center;gap:14px;padding-block:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:10px;min-width:0}
+.brand b{font-family:var(--display);font-size:22px;font-weight:800;letter-spacing:-.02em}
+.brand b span{color:var(--delc-green)}
+.brand small{color:#b9c6dc;font-size:12.5px;white-space:nowrap}
+.bar .sp{flex:1}
+.who{display:flex;gap:6px;align-items:center;font-size:12.5px;color:#c9d4e6;flex-wrap:wrap}
+.who select{background:var(--navy-2);border:1px solid #3a5784;color:#fff;border-radius:999px;padding:5px 10px;font-size:13px}
+.tabs{background:var(--navy);border-top:1px solid #2c4870}
+.tabs .wrap{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+.tabs button{background:none;border:0;color:#c3cfe2;padding:10px 14px;font-weight:600;font-size:14px;border-bottom:3px solid transparent;white-space:nowrap;cursor:pointer}
+.tabs button.on{color:#fff;border-bottom-color:var(--gold)}
+.tabs button:focus-visible,.btn:focus-visible,.chipbtn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.demo{background:var(--gold-soft);color:var(--ink);font-size:12.5px;text-align:center;padding:6px 12px}
+main{padding-block:18px 60px}
+/* bits */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.between{justify-content:space-between}
+.stack{display:flex;flex-direction:column;gap:12px}
+.muted{color:var(--muted)}.tiny{font-size:12.5px}.small{font-size:13.5px}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 14px;font-weight:600;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.btn:hover{background:var(--soft)}
+.btn.pri{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:#1b1406}
+.btn.sm{padding:5px 10px;font-size:13px;border-radius:8px}
+.btn.ghost{border-color:transparent;background:none}
+.btn.danger{color:var(--bad)}
+.chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:700;background:var(--soft);color:var(--muted);white-space:nowrap}
+.chip.ok{background:var(--ok-soft);color:var(--ok)}.chip.warn{background:var(--warn-soft);color:var(--warn)}.chip.bad{background:var(--bad-soft);color:var(--bad)}.chip.info{background:var(--info-soft);color:var(--info)}.chip.gold{background:var(--gold-soft);color:var(--warn)}
+.lbl{font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700}
+.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:700;color:var(--muted);min-width:0}
+.inp,.f input,.f select,.f textarea{width:100%;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px 11px;font-weight:500;font-size:14.5px;color:var(--ink)}
+.f textarea{resize:vertical}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media (max-width:640px){.grid2,.grid3{grid-template-columns:1fr}}
+.empty{padding:22px;text-align:center;color:var(--muted)}
+.notice{border-radius:12px;padding:10px 12px;font-size:13.5px;display:flex;gap:8px;align-items:flex-start}
+.notice.warn{background:var(--warn-soft);color:var(--warn)}.notice.bad{background:var(--bad-soft);color:var(--bad)}.notice.ok{background:var(--ok-soft);color:var(--ok)}.notice.info{background:var(--info-soft);color:var(--info)}
+/* day header */
+.day{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.day h1{font-size:26px}
+.stepper{display:flex;align-items:center;border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden}
+.stepper button{border:0;background:none;padding:8px 12px;cursor:pointer;font-weight:700}
+.stepper span{padding:8px 4px;font-weight:700;font-variant-numeric:tabular-nums}
+.rooms{display:flex;gap:6px;flex-wrap:wrap}
+.chipbtn{border:1.5px solid var(--line);background:var(--card);border-radius:999px;padding:6px 14px;font-weight:700;font-size:13.5px;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.chipbtn.on{border-color:var(--navy);background:var(--navy);color:#fff}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.stat b{display:block;font-family:var(--display);font-size:26px;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat.alert{border-color:var(--warn);background:var(--warn-soft)}
+.stat.alert b{color:var(--warn)}
+@media (max-width:640px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.today{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:900px){.today{grid-template-columns:1fr}}
+/* roster */
+.kid{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 4px;border-top:1px solid var(--line)}
+.kid:first-child{border-top:0}
+.av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-family:var(--display);color:#fff;font-size:15px}
+.kid .nm{font-weight:700}
+.kid .nm button{all:unset;cursor:pointer}
+.kid .nm button:hover{text-decoration:underline}
+.kid.in{background:linear-gradient(90deg,var(--ok-soft),transparent 70%)}
+.kid .sub{font-size:12.5px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.allergy{background:var(--bad-soft);color:var(--bad);font-weight:800}
+.sec{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.sec h2{font-size:17px}
+.plan{border-top:1px dashed var(--line);margin-top:10px;padding-top:10px}
+.plan dt{font-weight:700;font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:8px}
+.plan dd{margin:2px 0 0}
+.adult{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.adult:first-of-type{border-top:0}
+.issue{border-left:4px solid var(--warn);background:var(--soft);border-radius:8px;padding:8px 10px;margin-top:8px}
+.issue.Injury{border-left-color:var(--bad)}.issue.Resolved{opacity:.75}
+/* tables */
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:8px;border-bottom:1.5px solid var(--line);white-space:nowrap}
+.tbl td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl tr.click{cursor:pointer}.tbl tr.click:hover td{background:var(--soft)}
+.scroll{overflow-x:auto}
+.num,.tbl th.num{text-align:right;font-variant-numeric:tabular-nums}
+@media (max-width:640px){.hide-sm{display:none}}
+/* profile */
+.prof{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:820px){.prof{grid-template-columns:1fr}}
+.phead{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.phead .av{width:64px;height:64px;font-size:24px}
+.kv{display:grid;grid-template-columns:120px minmax(0,1fr);gap:4px 10px;font-size:14px}
+.kv dt{color:var(--muted);font-weight:600}.kv dd{margin:0}
+.dots{display:flex;gap:4px;flex-wrap:wrap}
+.dots i{width:16px;height:16px;border-radius:4px;background:var(--soft);border:1px solid var(--line);display:block}
+.dots i.y{background:var(--ok);border-color:var(--ok)}
+/* bars */
+.barrow{display:grid;grid-template-columns:150px minmax(0,1fr) 60px;gap:10px;align-items:center;font-size:13.5px;margin-top:6px}
+.track{height:12px;background:var(--soft);border-radius:6px;overflow:hidden}
+.track i{display:block;height:100%;border-radius:6px}
+@media (max-width:640px){.barrow{grid-template-columns:100px minmax(0,1fr) 46px}}
+/* modal */
+.mbg{position:fixed;inset:0;background:rgba(10,18,32,.5);display:flex;align-items:flex-end;justify-content:center;z-index:20;padding:0}
+.modal{background:var(--card);width:100%;max-width:640px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px;padding-bottom:max(18px,env(safe-area-inset-bottom,0px))}
+@media (min-width:700px){.mbg{align-items:center;padding:20px}.modal{border-radius:18px}}
+.mhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px}
+.mhead h2{font-size:20px}
+.x{border:0;background:var(--soft);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:18px}
+.toast{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:12px;font-weight:600;z-index:30;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.list-item{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 0;border-top:1px solid var(--line)}
+.list-item:first-child{border-top:0}
+textarea.copy{width:100%;min-height:200px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--soft);color:var(--ink)}
+@media (prefers-reduced-motion:no-preference){.kid{transition:background .25s}}
+
+@media (max-width:560px){.brand small{white-space:normal}}
+.stars{display:inline-flex;gap:2px}.stars i{font-style:normal;color:var(--line);font-size:16px}.stars i.on{color:var(--gold)}
+.rate{display:flex;gap:4px;flex-wrap:wrap}.rate button{border:1.5px solid var(--line);background:var(--card);border-radius:10px;min-width:44px;padding:6px 8px;font-weight:800;cursor:pointer}
+.rate button.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.goal{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;background:var(--card)}
+.goal h3{font-size:15px;font-family:var(--body);font-weight:700}
+.matrix{width:100%;border-collapse:collapse;font-size:13.5px}.matrix th,.matrix td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:center}.matrix th:first-child,.matrix td:first-child{text-align:left}
+.steps{display:flex;gap:0;flex-wrap:wrap;margin:6px 0 2px}.steps span{font-size:12px;font-weight:700;padding:4px 10px;border:1px solid var(--line);color:var(--muted);background:var(--soft)}.steps span:first-child{border-radius:999px 0 0 999px}.steps span:last-child{border-radius:0 999px 999px 0}.steps span.done{background:var(--ok-soft);color:var(--ok)}.steps span.now{background:var(--navy);color:#fff;border-color:var(--navy)}
+.role-staff{background:var(--info-soft);color:var(--info)}.role-council{background:var(--gold-soft);color:var(--warn)}.role-volunteer{background:var(--ok-soft);color:var(--ok)}
+.apps{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.appcard{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--soft)}
+.appcard b{display:block;font-size:13px}.appcard .tiny{display:block}
+.private{border-left:4px solid var(--gold)}
+</style>
+</head>
+<body>
+
+
+<div class="demo">Demo with made-up people. Reviews and HR notes are private — the live version will need its own sign-in for Mutual Ministry. <button class="btn sm ghost" data-act="reset" style="padding:0 6px;text-decoration:underline">Reset demo</button></div>
+<header class="bar"><div class="wrap">
+  <div class="brand"><b>delc<span>PEOPLE</span></b><small>Mutual Ministry</small></div>
+  <span class="sp"></span>
+  <label class="who" for="as">Viewing as <select id="as" data-chg="as"></select></label>
+</div></header>
+<nav class="tabs" aria-label="Sections"><div class="wrap" id="tabs"></div></nav>
+<main class="wrap" id="app"></main>
+<div id="modal"></div>
+
+<script>
+const KEY = 'delcpeople_demo_v1';
+/* Live hookup: set to {url, key}. The room list then loads from delcFACILITIES (fac_settings → locations). */
+let PEOPLE_LIVE = null;
+const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const TODAY = iso(new Date()); const YEAR = +TODAY.slice(0, 4);
+const dOf = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (s, n) => { const d = dOf(s); d.setDate(d.getDate() + n); return iso(d); };
+const uid = () => Math.random().toString(36).slice(2, 10);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const fmt = (s, o) => s ? dOf(s).toLocaleDateString('en-US', o || {month: 'short', day: 'numeric', year: 'numeric'}) : '';
+const plural = (n, w, p) => `${n} ${n === 1 ? w : (p || w + 's')}`;
+const yearsSince = s => { if (!s) return 0; const a = dOf(s), b = dOf(TODAY); let y = b.getFullYear() - a.getFullYear(); if (b < new Date(b.getFullYear(), a.getMonth(), a.getDate())) y--; return y; };
+/* The real room list from delcFACILITIES ▸ Settings ▸ Places (copied here for the demo; live loads it) */
+let ROOMS = ['Nave/Sanctuary', 'Narthex', 'Social Hall', 'Family Life Center', 'Kitchen', 'Church Office', 'Pastor’s Office', 'Kids Korner - Nursery/Pre-K', 'Kids Korner - Elementary', 'Kids Korner - Youth', 'Janitor Closet', 'Boiler Room', 'Elevator Service Room', 'Chapel', 'Library/Pet Pantry', 'IT Room', 'Red Room', 'FLC Board Room', 'Parlor', 'JAM Room', 'Parking Lot', 'Grounds'];
+let ROOMS_FROM = 'delcFACILITIES (copied for the demo)';
+const TEAMS = ['F&B / Hospitality', 'Kitchen', 'Sunday School', 'Kid’s Korner', 'Youth', 'Ushers & Greeters', 'Worship / Music', 'Altar Guild', 'Roots Program', 'Pet Pantry', 'HS Pantry', 'Motivational Mug', 'Facilities / Property', 'Office help', 'Audio / Video', 'Counting team'];
+const DEPTS = ['Pastoral', 'Worship & Music', 'Service & Hospitality', 'Christian Education', 'Outreach & Community', 'Intergenerational Activities', 'Congregational Resources', 'Mutual & People', 'Facility & Security', 'Finance & Treasury', 'Office & Admin', 'Music', 'IT'];
+const SCORE = {1: 'Needs improvement', 2: 'Developing', 3: 'Meets expectations', 4: 'Exceeds', 5: 'Outstanding'};
+const STAGES = ['Goals set', 'Mid-year check-in', 'Rating open', 'Complete'];
+
+function seed() {
+  const P = (first, last, roles, extra) => ({id: 'p' + uid(), first, last, roles, phone: '814-555-01' + String(10 + Math.floor(Math.random() * 89)), email: (first[0] + last).toLowerCase() + '@example.org', emergency: {name: '', phone: ''}, staff: null, council: null, volunteer: null, clearances: {child_abuse: '', police: '', fbi: ''}, training: '', rooms: [], notes: '', active: true, apps: {}, ...extra});
+  const y = n => addDays(TODAY, -Math.round(n * 365));
+  const people = [
+    P('Jordan', 'Example', ['staff'], {staff: {title: 'Pastor', status: 'Full-time', hours: 40, hire: y(3.4), supervisor: 'Council President', job: 'Word and Sacrament ministry, pastoral care, confirmation.'}, rooms: ['Pastor’s Office', 'Nave/Sanctuary'], apps: {board: 'Pastoral (director)'}}),
+    P('Casey', 'Sample', ['staff'], {staff: {title: 'Office Administrator', status: 'Part-time', hours: 25, hire: y(6.1), supervisor: 'Pastor', job: 'Bulletins, calendar, room bookings, weekly attendance & giving report.'}, rooms: ['Church Office', 'IT Room'], apps: {board: 'Office & Admin (director)', fac: 'Office key, Front doors'}}),
+    P('Robin', 'Placeholder', ['staff'], {staff: {title: 'Sexton / Custodian', status: 'Part-time', hours: 20, hire: y(4.9), supervisor: 'Facility & Security director', job: 'Cleaning, lock-up, set-ups, minor repairs.'}, rooms: ['Janitor Closet', 'Boiler Room', 'Family Life Center'], apps: {fac: 'All building keys · assigned work orders'}}),
+    P('Avery', 'Demo', ['staff'], {staff: {title: 'Music Director', status: 'Part-time', hours: 10, hire: y(1.8), supervisor: 'Pastor', job: 'Choir, organ/piano, worship planning with Pastor.'}, rooms: ['Nave/Sanctuary', 'JAM Room']}),
+    P('Morgan', 'Testwell', ['council'], {council: {position: 'President', term_start: y(1.8), term_end: addDays(TODAY, 400), departments: ['Service & Hospitality']}, apps: {board: 'Council President · Service & Hospitality', fb: 'S&H director'}}),
+    P('Riley', 'Mockley', ['council', 'volunteer'], {council: {position: 'Director', term_start: y(2.7), term_end: addDays(TODAY, 64), departments: ['Mutual & People']}, volunteer: {teams: ['Ushers & Greeters'], since: y(8)}, apps: {board: 'Mutual & People (director)'}}),
+    P('Quinn', 'Fakename', ['council'], {council: {position: 'Treasurer', term_start: y(.9), term_end: addDays(TODAY, 760), departments: ['Finance & Treasury']}, volunteer: null, apps: {board: 'Finance & Treasury (director)'}}),
+    P('Taylor', 'Examplar', ['council', 'volunteer'], {council: {position: 'Director', term_start: y(.5), term_end: addDays(TODAY, 900), departments: ['Christian Education']}, volunteer: {teams: ['Sunday School'], since: y(3)}, clearances: {child_abuse: y(1.2), police: y(1.2), fbi: y(1.2)}, training: y(.6), rooms: ['Kids Korner - Elementary'], apps: {board: 'Christian Education (director)', edu: 'Christian Ed Director · all rooms'}}),
+    P('Drew', 'Notreal', ['council'], {council: {position: 'Director', term_start: y(2.2), term_end: addDays(TODAY, 120), departments: ['Facility & Security']}, apps: {board: 'Facility & Security (director)', fac: 'Front doors, FLC side door'}}),
+    P('Sam', 'Pretend', ['volunteer'], {volunteer: {teams: ['F&B / Hospitality', 'Kitchen', 'Motivational Mug'], since: y(5)}, apps: {fb: 'Kitchen team · 14 events this year'}}),
+    P('Alex', 'Specimen', ['volunteer'], {volunteer: {teams: ['Kid’s Korner'], since: y(2)}, clearances: {child_abuse: y(4.9), police: y(4.9), fbi: y(4.9)}, training: y(1.5), rooms: ['Kids Korner - Nursery/Pre-K'], apps: {edu: 'Kid’s Korner helper'}}),
+    P('Jamie', 'Template', ['volunteer'], {volunteer: {teams: ['Youth'], since: y(.2)}, clearances: {child_abuse: y(.05), police: y(.05), fbi: ''}, rooms: ['Kids Korner - Youth'], apps: {edu: 'Youth Group helper'}}),
+    P('Pat', 'Standin', ['volunteer'], {volunteer: {teams: ['Roots Program', 'Facilities / Property'], since: y(6)}, apps: {board: 'Roots volunteer (yard / grass, snow)', fac: 'FLC side door #4 — confirm yearly'}}),
+    P('Lee', 'Dummy', ['volunteer'], {volunteer: {teams: ['Pet Pantry', 'HS Pantry'], since: y(1)}, rooms: ['Library/Pet Pantry']}),
+    P('Kendall', 'Invented', ['volunteer'], {volunteer: {teams: ['Counting team', 'Office help'], since: y(9)}})
+  ];
+  people.find(p => p.last === 'Dummy').emergency = {name: 'Spouse (sample)', phone: '814-555-0177'};
+  const by = l => people.find(p => p.last === l).id;
+  const G = (text, measure) => ({id: 'g' + uid(), text, measure});
+  const council = people.filter(p => p.roles.includes('council')).map(p => p.id);
+  const R = (who, year, status, goals, ratings, extra) => ({id: 'r' + uid(), person_id: by(who), year, status, goals, ratings: ratings || [], self: '', checkin: '', summary: '', ...extra});
+  const g1 = [G('Grow weekly attendance through outreach events', 'Average 10am attendance up 10%'), G('Launch a new adult study', 'At least one study with 8+ people'), G('Visit homebound members monthly', '12 visit rounds logged')];
+  const g2 = [G('Move the weekly report into the Attendance & Giving app', 'No more spreadsheet by June'), G('Keep the church calendar current', 'Room bookings confirmed a week ahead'), G('Cross-train a volunteer on bulletins', 'Volunteer prepares 4 bulletins')];
+  const g3 = [G('Keep maintenance on schedule', 'No overdue preventive maintenance at month end'), G('Lock-up checklist every night the building is used', 'Checklist signed each time')];
+  const rate = (goals, scores) => { const out = []; council.forEach((cid, ci) => goals.forEach((g, gi) => { const s = (scores[gi] + ((ci + gi) % 3) - 1); out.push({rater: cid, goal: g.id, score: Math.max(1, Math.min(5, s)), comment: ci === 0 && gi === 0 ? 'Good progress this year.' : '', at: TODAY}); })); return out; };
+  const reviews = [
+    R('Example', YEAR - 1, 'Complete', g1.map(g => ({...g, id: 'g' + uid()})), null, {summary: 'Strong pastoral care; keep building the adult study.', self: 'Proud of the homebound visits; attendance goal was harder than expected.'}),
+    R('Example', YEAR, 'Rating open', g1, null, {self: 'Started the Wednesday study (11 people). Visits on track.', checkin: 'Mid-year: attendance flat, study going well.'}),
+    R('Sample', YEAR, 'Mid-year check-in', g2, null, {checkin: 'Report moved to the app in August — first goal met.'}),
+    R('Placeholder', YEAR, 'Goals set', g3),
+    R('Testwell', YEAR, 'Goals set', [G('Run council meetings on time with agendas out a week ahead', 'Agenda sent 7 days before every meeting'), G('Finish department templates for every committee', 'All 13 departments set up in delcBOARD')])
+  ];
+  reviews[0].ratings = rate(reviews[0].goals, [4, 3, 5]); reviews[1].ratings = rate(g1, [3, 4, 5]).filter((x, i) => i < 8);
+  return {people, reviews, v: 1};
+}
+let DB; let MEM = null;
+function load() { try { const s = localStorage.getItem(KEY); if (s) return JSON.parse(s); } catch (_) {} return MEM || seed(); }
+function persist() { MEM = DB; try { localStorage.setItem(KEY, JSON.stringify(DB)); } catch (_) {} }
+DB = load();
+
+/* ---- who is looking ---- */
+const S = {tab: 'dash', as: 'mm', person: null, review: null, q: '', role: 'all', year: YEAR, modal: null};
+try { const u = JSON.parse(localStorage.getItem(KEY + '_ui') || '{}'); if (u.as) S.as = u.as; if (u.tab) S.tab = u.tab; } catch (_) {}
+const saveUi = () => { try { localStorage.setItem(KEY + '_ui', JSON.stringify({as: S.as, tab: S.tab})); } catch (_) {} };
+const person = id => DB.people.find(p => p.id === id);
+const pname = p => p ? p.first + ' ' + p.last : '';
+const isMM = () => S.as === 'mm';
+const viewer = () => (typeof Live !== 'undefined' && Live.on && Live.meId && person(Live.meId)) || (isMM() ? DB.people.find(p => p.council && (p.council.departments || []).includes('Mutual & People')) : person(S.as));
+const isCouncilViewer = () => { const v = viewer(); return !!(v && v.roles.includes('council')); };
+const councilIds = () => DB.people.filter(p => p.active !== false && p.roles.includes('council')).map(p => p.id);
+const initials = p => ((p.first || '?')[0] + (p.last || '')[0]).toUpperCase();
+const roleChip = r => `<span class="chip role-${r}">${r === 'staff' ? 'Staff' : r === 'council' ? 'Council' : 'Volunteer'}</span>`;
+const avColor = p => p.roles.includes('staff') ? '#1f4f9c' : p.roles.includes('council') ? '#C8973A' : '#1f7a4a';
+function clearState(dt) { if (!dt) return {cls: 'bad', txt: 'Missing'}; const exp = addDays(dt, 365 * 5); const days = (dOf(exp) - dOf(TODAY)) / 864e5; if (days < 0) return {cls: 'bad', txt: 'Expired ' + fmt(exp)}; if (days < 90) return {cls: 'warn', txt: 'Renew by ' + fmt(exp)}; return {cls: 'ok', txt: 'Good to ' + fmt(exp, {month: 'short', year: 'numeric'})}; }
+const worksWithKids = p => (p.volunteer && (p.volunteer.teams || []).some(t => /Sunday School|Kid|Youth/.test(t))) || (p.rooms || []).some(r => /Kids Korner/.test(r));
+const clearWorst = p => { const L = ['child_abuse', 'police', 'fbi'].map(k => clearState(p.clearances[k]).cls); return L.includes('bad') ? 'bad' : L.includes('warn') ? 'warn' : 'ok'; };
+const avg = a => a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length * 10) / 10 : null;
+const goalAvg = (r, gid) => avg(r.ratings.filter(x => x.goal === gid).map(x => x.score));
+const reviewAvg = r => avg(r.goals.map(g => goalAvg(r, g.id)).filter(x => x != null));
+const ratersDone = r => [...new Set(r.ratings.map(x => x.rater))].filter(id => r.goals.every(g => r.ratings.some(x => x.rater === id && x.goal === g.id)));
+const stars = v => { const n = Math.round(v || 0); return `<span class="stars" aria-label="${v} of 5">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= n ? 'on' : ''}">★</i>`).join('')}</span>`; };
+const canSeeReview = r => isMM() || (isCouncilViewer() && r.status === 'Rating open') || (viewer() && viewer().id === r.person_id);
+
+/* ---- render ---- */
+function renderWho() {
+  const staff = DB.people.filter(p => p.roles.includes('staff')); const council = DB.people.filter(p => p.roles.includes('council') && !(p.council.departments || []).includes('Mutual & People'));
+  const opts = [['mm', 'Mutual Ministry director (manages delcPEOPLE)'], ...council.map(p => [p.id, pname(p) + ' — Council']), ...staff.map(p => [p.id, pname(p) + ' — ' + p.staff.title])];
+  if (!opts.some(o => o[0] === S.as)) S.as = 'mm';
+  $('#as').innerHTML = opts.map(([v, l]) => `<option value="${v}" ${v === S.as ? 'selected' : ''}>${esc(l)}</option>`).join('');
+}
+function tabs() { if (isMM()) return [['dash', 'Dashboard'], ['people', 'People'], ['reviews', 'Reviews'], ['rooms', 'Rooms']]; if (isCouncilViewer()) return [['rate', 'Reviews to rate'], ['people', 'Directory'], ['me', 'My profile']]; return [['me', 'My profile'], ['myrev', 'My review']]; }
+function render() {
+  renderWho(); const T = tabs(); if (!T.some(t => t[0] === S.tab)) S.tab = T[0][0];
+  const toRate = isCouncilViewer() ? DB.reviews.filter(r => r.status === 'Rating open' && r.person_id !== viewer().id && !ratersDone(r).includes(viewer().id)).length : 0;
+  $('#tabs').innerHTML = T.map(([k, l]) => `<button class="${S.tab === k && !S.person && !S.review ? 'on' : ''}" data-act="tab" data-v="${k}">${l}${k === 'rate' && toRate ? ` <span class="chip warn" style="margin-left:4px">${toRate}</span>` : ''}</button>`).join('');
+  const v = S.review ? viewReview(DB.reviews.find(r => r.id === S.review)) : S.person ? viewProfile(person(S.person)) : S.tab === 'dash' ? viewDash() : S.tab === 'people' ? viewPeople() : S.tab === 'reviews' ? viewReviews() : S.tab === 'rooms' ? viewRooms() : S.tab === 'rate' ? viewRate() : S.tab === 'me' ? viewProfile(viewer()) : viewMyReview();
+  $('#app').innerHTML = v; saveUi(); renderModal();
+}
+
+/* ---- dashboard (Mutual Ministry) ---- */
+function viewDash() {
+  const act = DB.people.filter(p => p.active !== false); const staff = act.filter(p => p.roles.includes('staff')), council = act.filter(p => p.roles.includes('council')), vol = act.filter(p => p.roles.includes('volunteer'));
+  const yr = DB.reviews.filter(r => r.year === YEAR); const need = [...staff, ...council].filter(p => !yr.some(r => r.person_id === p.id));
+  const kids = act.filter(worksWithKids); const clr = kids.filter(p => clearWorst(p) !== 'ok');
+  const terms = council.filter(p => p.council.term_end && (dOf(p.council.term_end) - dOf(TODAY)) / 864e5 <= 180).sort((a, b) => a.council.term_end.localeCompare(b.council.term_end));
+  const anniv = staff.map(p => { const h = dOf(p.staff.hire); let n = new Date(+TODAY.slice(0, 4), h.getMonth(), h.getDate()); if (iso(n) < TODAY) n = new Date(+TODAY.slice(0, 4) + 1, h.getMonth(), h.getDate()); return {p, d: iso(n), yrs: n.getFullYear() - h.getFullYear()}; }).filter(x => (dOf(x.d) - dOf(TODAY)) / 864e5 <= 90).sort((a, b) => a.d.localeCompare(b.d));
+  const stageCount = s => yr.filter(r => r.status === s).length;
+  const li = (t, s, act, id, btn) => `<div class="list-item"><span class="small">${t}${s ? ` <span class="tiny muted">${s}</span>` : ''}</span>${act ? `<button class="btn sm" data-act="${act}" data-id="${id}">${btn || 'Open'}</button>` : ''}</div>`;
+  return `<div class="day"><h1>Mutual Ministry</h1><span class="muted">people who serve DELC, at a glance</span></div>
+    <div class="stats"><div class="stat"><span class="lbl">Staff</span><b>${staff.length}</b><span class="tiny muted">${staff.filter(p => p.staff.status === 'Full-time').length} full-time</span></div><div class="stat"><span class="lbl">Council</span><b>${council.length}</b><span class="tiny muted">${terms.length} term${terms.length === 1 ? '' : 's'} ending within 6 months</span></div><div class="stat"><span class="lbl">Volunteers</span><b>${vol.length}</b><span class="tiny muted">${kids.length} work with children</span></div><div class="stat ${clr.length ? 'alert' : ''}"><span class="lbl">Clearances</span><b>${clr.length}</b><span class="tiny muted">${clr.length ? 'missing or due' : 'all current'}</span></div></div>
+    <section class="card" style="margin-bottom:14px"><div class="sec"><h2>${YEAR} reviews</h2><button class="btn sm" data-act="tab" data-v="reviews">All reviews</button></div>
+      <div class="steps" aria-label="Review stages">${STAGES.map(s => `<span class="${stageCount(s) ? 'now' : ''}">${s}: ${stageCount(s)}</span>`).join('')}</div>
+      ${need.length ? `<div class="notice warn" style="margin-top:10px">⚠️ <div>${plural(need.length, 'person', 'people')} on staff or council ${need.length === 1 ? 'has' : 'have'} no ${YEAR} goals yet: ${need.map(p => esc(pname(p))).join(', ')}. <button class="btn sm" data-act="startYear" style="margin-left:6px">Start ${YEAR} reviews</button></div></div>` : ''}
+      <div style="margin-top:10px">${yr.filter(r => r.status === 'Rating open').map(r => { const p = person(r.person_id); const n = ratersDone(r).length; return li(`<b>${esc(pname(p))}</b> — ratings open`, `${n} of ${councilIds().filter(id => id !== r.person_id).length} council members have rated`, 'openReview', r.id); }).join('')}</div></section>
+    <div class="prof">
+      <section class="card"><div class="sec"><h2>Coming up</h2></div>
+        ${terms.map(p => li(`<b>${esc(pname(p))}</b> — council term ends`, fmt(p.council.term_end), 'profile', p.id)).join('')}
+        ${anniv.map(x => li(`<b>${esc(pname(x.p))}</b> — ${x.yrs} year${x.yrs === 1 ? '' : 's'} on staff`, fmt(x.d, {month: 'short', day: 'numeric'}), 'profile', x.p.id)).join('')}
+        ${!terms.length && !anniv.length ? '<div class="small muted">Nothing in the next few months.</div>' : ''}</section>
+      <section class="card"><div class="sec"><h2>Clearances for people with children</h2></div>
+        ${clr.map(p => li(`<b>${esc(pname(p))}</b>`, clearWorst(p) === 'bad' ? 'missing or expired' : 'renewal due soon', 'profile', p.id, 'Update')).join('') || '<div class="small muted">Everyone who works with children is current.</div>'}
+        <div class="tiny muted" style="margin-top:6px">Same clearances delcEDUCATION checks for the two-adult rule.</div></section>
+    </div>`;
+}
+/* ---- directory ---- */
+function viewPeople() {
+  const q = S.q.toLowerCase(); const mm = isMM();
+  const L = DB.people.filter(p => (S.role === 'all' || p.roles.includes(S.role)) && (!q || [pname(p), p.phone, p.email, (p.staff || {}).title, ((p.volunteer || {}).teams || []).join(' '), ((p.council || {}).departments || []).join(' ')].join(' ').toLowerCase().includes(q))).sort((a, b) => a.last.localeCompare(b.last));
+  return `<div class="day"><h1>${mm ? 'People' : 'Directory'}</h1><span class="muted">${L.length} shown</span><span style="flex:1"></span>${mm ? '<button class="btn gold" data-act="newPerson">+ Add a person</button>' : ''}</div>
+    <div class="row" style="margin-bottom:12px"><input class="inp" id="q" data-inp="q" placeholder="Search name, team, title or department" value="${esc(S.q)}" style="max-width:320px"><div class="rooms">${[['all', 'Everyone'], ['staff', 'Staff'], ['council', 'Council'], ['volunteer', 'Volunteers']].map(([k, l]) => `<button class="chipbtn ${S.role === k ? 'on' : ''}" data-act="role" data-v="${k}">${l}</button>`).join('')}</div></div>
+    <div class="card scroll" style="padding:6px 10px"><table class="tbl"><thead><tr><th>Name</th><th>Role</th><th class="hide-sm">What they do</th><th class="hide-sm">Phone</th>${mm ? '<th>Clearances</th>' : ''}</tr></thead><tbody>
+    ${L.map(p => `<tr class="click" data-act="profile" data-id="${p.id}"><td><div class="row" style="gap:8px;flex-wrap:nowrap"><div class="av" style="width:32px;height:32px;font-size:12.5px;background:${avColor(p)}">${esc(initials(p))}</div><b>${esc(pname(p))}</b>${p.active === false ? ' <span class="chip">Inactive</span>' : ''}</div></td><td>${p.roles.map(roleChip).join(' ')}</td><td class="hide-sm small">${esc([(p.staff || {}).title, (p.council || {}).position && 'Council ' + p.council.position.toLowerCase() + ((p.council.departments || []).length ? ' · ' + p.council.departments.join(', ') : ''), ((p.volunteer || {}).teams || []).join(', ')].filter(Boolean).join(' · '))}</td><td class="hide-sm small" style="white-space:nowrap">${esc(p.phone)}</td>${mm ? `<td>${worksWithKids(p) ? `<span class="chip ${clearWorst(p)}">${clearWorst(p) === 'ok' ? '✓ current' : clearWorst(p) === 'warn' ? 'renew soon' : 'missing'}</span>` : '<span class="tiny muted">—</span>'}</td>` : ''}</tr>`).join('') || '<tr><td colspan="5" class="empty">No one matches.</td></tr>'}</tbody></table></div>`;
+}
+/* ---- profile ---- */
+function viewProfile(p) {
+  if (!p) { S.person = null; return '<div class="card empty">Not found.</div>'; }
+  const mm = isMM(); const self = viewer() && viewer().id === p.id; const full = mm || self;
+  const revs = DB.reviews.filter(r => r.person_id === p.id).sort((a, b) => b.year - a.year);
+  const clr = k => { const c = clearState(p.clearances[k]); return `<span class="chip ${c.cls}">${esc(c.txt)}</span>`; };
+  return `${S.person ? `<div style="margin-bottom:12px"><button class="btn sm ghost" data-act="back">← Back</button></div>` : ''}
+    <div class="card" style="margin-bottom:14px"><div class="phead"><div class="av" style="background:${avColor(p)}">${esc(initials(p))}</div><div style="flex:1;min-width:0"><h1 style="font-size:26px">${esc(pname(p))}</h1><div class="row" style="gap:6px;margin-top:4px">${p.roles.map(roleChip).join('')}${p.staff ? `<span class="muted small">${esc(p.staff.title)}</span>` : ''}${p.active === false ? '<span class="chip">Inactive</span>' : ''}</div></div>${mm ? `<button class="btn" data-act="editPerson" data-id="${p.id}">Edit</button>` : self ? `<button class="btn" data-act="editSelf" data-id="${p.id}">Update my info</button>` : ''}</div></div>
+    <div class="prof">
+      <section class="card"><div class="sec"><h2>Contact</h2></div><dl class="kv"><dt>Phone</dt><dd style="user-select:all">${esc(p.phone || '—')}</dd><dt>Email</dt><dd style="user-select:all">${esc(p.email || '—')}</dd>${full ? `<dt>Emergency</dt><dd>${esc([p.emergency.name, p.emergency.phone].filter(Boolean).join(' · ') || '—')}</dd>` : ''}</dl></section>
+      ${p.staff ? `<section class="card"><div class="sec"><h2>Staff</h2></div><dl class="kv"><dt>Position</dt><dd>${esc(p.staff.title)}</dd><dt>Status</dt><dd>${esc(p.staff.status)}${p.staff.hours ? ' · ' + p.staff.hours + ' hrs/week' : ''}</dd><dt>Hired</dt><dd>${fmt(p.staff.hire)} · ${plural(yearsSince(p.staff.hire), 'year')}</dd><dt>Reports to</dt><dd>${esc(p.staff.supervisor || '—')}</dd><dt>Duties</dt><dd>${esc(p.staff.job || '—')}</dd></dl></section>` : ''}
+      ${p.council ? `<section class="card"><div class="sec"><h2>Council</h2></div><dl class="kv"><dt>Position</dt><dd>${esc(p.council.position)}</dd><dt>Term</dt><dd>${fmt(p.council.term_start)} – ${fmt(p.council.term_end)}</dd><dt>Leads</dt><dd>${esc((p.council.departments || []).join(', ') || '—')}</dd></dl></section>` : ''}
+      ${p.volunteer || worksWithKids(p) ? `<section class="card"><div class="sec"><h2>Serving</h2></div>${p.volunteer ? `<div class="rooms" style="margin-bottom:8px">${(p.volunteer.teams || []).map(t => `<span class="chip role-volunteer">${esc(t)}</span>`).join('')}</div><div class="tiny muted">Volunteering since ${fmt(p.volunteer.since, {month: 'long', year: 'numeric'}) || '—'}</div>` : ''}
+        ${worksWithKids(p) || p.clearances.child_abuse ? `<div class="lbl" style="margin:12px 0 4px">PA clearances (renew every 5 years)</div><dl class="kv"><dt>Child Abuse</dt><dd>${clr('child_abuse')}</dd><dt>State Police</dt><dd>${clr('police')}</dd><dt>FBI prints</dt><dd>${clr('fbi')}</dd><dt>Mandated reporter</dt><dd>${p.training ? fmt(p.training) : '<span class="chip bad">No training on file</span>'}</dd></dl>` : ''}</section>` : ''}
+      <section class="card"><div class="sec"><h2>Rooms</h2><span class="tiny muted">list from delcFACILITIES</span></div>${(p.rooms || []).map(r => `<span class="chip" style="margin:0 4px 4px 0">${esc(r)}</span>`).join('') || '<div class="small muted">No rooms linked.</div>'}<div class="tiny muted" style="margin-top:6px">Where they work or serve. Keys they hold are kept in delcFACILITIES ▸ Keys.</div></section>
+      <section class="card"><div class="sec"><h2>Across the DELC apps</h2></div><div class="apps">${[['board', 'delcBOARD'], ['fb', 'F&B Events'], ['fac', 'delcFACILITIES'], ['edu', 'delcEDUCATION']].map(([k, l]) => `<div class="appcard"><b>${l}</b><span class="tiny ${p.apps[k] ? '' : 'muted'}">${esc(p.apps[k] || 'Not linked')}</span></div>`).join('')}</div><div class="tiny muted" style="margin-top:6px">In the live version each app points to this one record, so a phone or email changes in one place.</div></section>
+      ${full && revs.length ? `<section class="card"><div class="sec"><h2>Yearly reviews</h2></div>${revs.map(r => `<div class="list-item"><span><b>${r.year}</b> <span class="chip ${r.status === 'Complete' ? 'ok' : 'info'}">${r.status}</span></span><span class="row" style="gap:6px">${r.status === 'Complete' || mm ? (reviewAvg(r) ? stars(reviewAvg(r)) + ` <b>${reviewAvg(r)}</b>` : '') : ''}<button class="btn sm" data-act="openReview" data-id="${r.id}">Open</button></span></div>`).join('')}</section>` : ''}
+      ${mm && p.notes ? `<section class="card private"><div class="sec"><h2>Private notes</h2><span class="tiny muted">Mutual Ministry only</span></div><p class="small" style="margin:0">${esc(p.notes)}</p></section>` : ''}
+    </div>`;
+}
+/* ---- reviews ---- */
+function viewReviews() {
+  const years = [...new Set([YEAR, ...DB.reviews.map(r => r.year)])].sort((a, b) => b - a); const L = DB.reviews.filter(r => r.year === S.year);
+  const pool = DB.people.filter(p => p.active !== false && (p.roles.includes('staff') || p.roles.includes('council')));
+  return `<div class="day"><h1>Reviews</h1><select class="inp" id="year" data-chg="year" style="width:auto">${years.map(y => `<option ${y === S.year ? 'selected' : ''}>${y}</option>`).join('')}</select><span style="flex:1"></span>${S.year === YEAR ? `<button class="btn gold" data-act="startYear">Start ${YEAR} reviews</button>` : ''}</div>
+    <div class="tiny muted" style="margin-bottom:10px">How it works: Mutual Ministry sets 3–5 goals in January → mid-year check-in → ratings open: every council member rates each goal 1–5 → Mutual Ministry writes a short summary and marks it complete. The person can add a self-review.</div>
+    <div class="card scroll" style="padding:6px 10px"><table class="tbl"><thead><tr><th>Person</th><th>Stage</th><th class="num">Goals</th><th class="hide-sm">Rated by</th><th class="num">Average</th></tr></thead><tbody>
+    ${pool.map(p => { const r = L.find(x => x.person_id === p.id); if (!r) return `<tr><td><b>${esc(pname(p))}</b><div class="tiny muted">${p.roles.map(x => x === 'staff' ? p.staff.title : x === 'council' ? 'Council' : '').filter(Boolean).join(' · ')}</div></td><td colspan="4"><button class="btn sm" data-act="newReview" data-id="${p.id}">+ Set ${S.year} goals</button></td></tr>`;
+      const done = ratersDone(r).length; const all = councilIds().filter(id => id !== r.person_id).length; const a = reviewAvg(r);
+      return `<tr class="click" data-act="openReview" data-id="${r.id}"><td><b>${esc(pname(p))}</b><div class="tiny muted">${p.roles.includes('staff') ? esc(p.staff.title) : 'Council'}</div></td><td><span class="chip ${r.status === 'Complete' ? 'ok' : r.status === 'Rating open' ? 'warn' : 'info'}">${r.status}</span></td><td class="num">${r.goals.length}</td><td class="hide-sm small">${['Rating open', 'Complete'].includes(r.status) ? `${done} of ${all}` : '—'}</td><td class="num">${a ? `${stars(a)} <b>${a}</b>` : '—'}</td></tr>`; }).join('')}</tbody></table></div>`;
+}
+function viewReview(r) {
+  if (!r || !canSeeReview(r)) { S.review = null; return '<div class="card empty">This review isn’t open to you.</div>'; }
+  const p = person(r.person_id); const mm = isMM(); const me = viewer(); const self = me && me.id === p.id; const rater = !self && isCouncilViewer() && r.status === 'Rating open';
+  const si = STAGES.indexOf(r.status); const cids = councilIds().filter(id => id !== r.person_id);
+  const myScore = gid => (r.ratings.find(x => x.rater === me.id && x.goal === gid) || {});
+  return `<div style="margin-bottom:12px"><button class="btn sm ghost" data-act="back">← Back</button></div>
+    <div class="card" style="margin-bottom:14px"><div class="phead"><div class="av" style="background:${avColor(p)}">${esc(initials(p))}</div><div style="flex:1;min-width:0"><h1 style="font-size:24px">${esc(pname(p))} · ${r.year} review</h1><div class="muted small">${p.staff ? esc(p.staff.title) : 'Council ' + esc((p.council || {}).position || '')}</div>
+      <div class="steps">${STAGES.map((s, i) => `<span class="${i < si ? 'done' : i === si ? 'now' : ''}">${s}</span>`).join('')}</div></div>
+      ${mm ? `<div class="row">${si > 0 ? `<button class="btn sm" data-act="stage" data-v="-1">‹ Back a step</button>` : ''}${si < 3 ? `<button class="btn sm pri" data-act="stage" data-v="1">${si === 0 ? 'Mark check-in' : si === 1 ? 'Open ratings to council' : 'Mark complete'} ›</button>` : ''}</div>` : ''}</div></div>
+    ${rater ? `<div class="notice info" style="margin-bottom:12px">Rate each goal 1–5. Your scores are seen only by Mutual Ministry; ${esc(p.first)} sees the average and the summary.</div>` : ''}
+    <section class="card" style="margin-bottom:14px"><div class="sec"><h2>Goals</h2>${mm ? '<button class="btn sm" data-act="editGoals">Edit goals</button>' : ''}</div>
+      ${r.goals.map((g, i) => { const a = goalAvg(r, g.id); const mine = rater ? myScore(g.id) : null;
+        return `<div class="goal"><div class="row between"><h3>${i + 1}. ${esc(g.text)}</h3>${(mm || r.status === 'Complete') && a ? `<span class="row" style="gap:6px">${stars(a)} <b>${a}</b></span>` : ''}</div>${g.measure ? `<div class="tiny muted">How we’ll know: ${esc(g.measure)}</div>` : ''}
+          ${rater ? `<div class="rate" style="margin-top:8px" role="group" aria-label="Rate goal ${i + 1}">${[1, 2, 3, 4, 5].map(n => `<button class="${mine.score === n ? 'on' : ''}" data-act="score" data-g="${g.id}" data-v="${n}" title="${SCORE[n]}">${n}</button>`).join('')}<span class="tiny muted" style="align-self:center;margin-left:6px">${mine.score ? SCORE[mine.score] : '1 = needs improvement · 5 = outstanding'}</span></div><input class="inp" style="margin-top:6px" data-comment="${g.id}" placeholder="Comment (optional)" value="${esc(mine.comment || '')}">` : ''}
+          ${mm && r.ratings.some(x => x.goal === g.id) ? `<details style="margin-top:6px"><summary class="tiny muted" style="cursor:pointer">Each council member’s score</summary><table class="matrix"><tbody>${cids.map(id => { const x = r.ratings.find(y => y.rater === id && y.goal === g.id); return `<tr><td>${esc(pname(person(id)))}</td><td>${x ? x.score : '—'}</td><td class="small" style="text-align:left">${esc((x || {}).comment || '')}</td></tr>`; }).join('')}</tbody></table></details>` : ''}</div>`; }).join('') || '<div class="small muted">No goals yet.</div>'}
+      ${rater ? '<div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn pri" data-act="saveRatings">Save my ratings</button></div>' : ''}</section>
+    <div class="prof">
+      <section class="card"><div class="sec"><h2>${esc(p.first)}’s self-review</h2>${self && r.status !== 'Complete' ? '<button class="btn sm" data-act="editSelfReview">Write it</button>' : ''}</div><p class="small" style="margin:0;white-space:pre-wrap">${esc(r.self || '') || '<span class="muted">Not written yet.</span>'}</p></section>
+      <section class="card"><div class="sec"><h2>Mid-year check-in</h2>${mm ? '<button class="btn sm" data-act="editCheckin">Edit</button>' : ''}</div><p class="small" style="margin:0;white-space:pre-wrap">${esc(r.checkin || '') || '<span class="muted">No notes yet.</span>'}</p></section>
+      ${mm || r.status === 'Complete' ? `<section class="card" style="grid-column:1/-1"><div class="sec"><h2>Summary from Mutual Ministry</h2>${mm ? '<button class="btn sm" data-act="editSummary">Edit</button>' : ''}</div>${reviewAvg(r) ? `<div class="row" style="gap:8px;margin-bottom:6px">${stars(reviewAvg(r))} <b>${reviewAvg(r)} average</b> <span class="tiny muted">${SCORE[Math.round(reviewAvg(r))]} · rated by ${ratersDone(r).length} of ${cids.length}</span></div>` : ''}<p class="small" style="margin:0;white-space:pre-wrap">${esc(r.summary || '') || '<span class="muted">Written when the review is complete.</span>'}</p></section>` : ''}
+    </div>`;
+}
+function viewRate() {
+  const me = viewer(); const L = DB.reviews.filter(r => r.status === 'Rating open' && r.person_id !== me.id);
+  return `<div class="day"><h1>Reviews to rate</h1></div><div class="tiny muted" style="margin-bottom:10px">Mutual Ministry opens a review for rating once the year’s work is done. Rate each goal 1–5; only Mutual Ministry sees individual scores.</div>
+    <div class="stack">${L.map(r => { const p = person(r.person_id); const done = ratersDone(r).includes(me.id); return `<div class="card row between"><div><b>${esc(pname(p))}</b> <span class="tiny muted">${r.year} · ${p.staff ? esc(p.staff.title) : 'Council'} · ${plural(r.goals.length, 'goal')}</span></div><button class="btn ${done ? '' : 'pri'}" data-act="openReview" data-id="${r.id}">${done ? '✓ Rated — change' : 'Rate now'}</button></div>`; }).join('') || '<div class="card empty">Nothing to rate right now.</div>'}</div>`;
+}
+function viewMyReview() { const me = viewer(); const r = DB.reviews.filter(x => x.person_id === me.id).sort((a, b) => b.year - a.year)[0]; if (!r) return '<div class="card empty">No review set up for you yet.</div>'; return viewReview(r).replace(/<div style="margin-bottom:12px"><button class="btn sm ghost" data-act="back">← Back<\/button><\/div>/, ''); }
+/* ---- rooms ---- */
+function viewRooms() {
+  return `<div class="day"><h1>Rooms</h1><span class="muted">from ${esc(ROOMS_FROM)}</span></div><div class="tiny muted" style="margin-bottom:10px">The room list is managed in delcFACILITIES ▸ Settings ▸ Places, and every app uses it. Here you can see who works or serves in each room.</div>
+    <div class="card scroll" style="padding:6px 10px"><table class="tbl"><thead><tr><th>Room</th><th>People</th></tr></thead><tbody>${ROOMS.map(r => { const L = DB.people.filter(p => (p.rooms || []).includes(r)); return `<tr><td><b>${esc(r)}</b></td><td>${L.map(p => `<button class="chipbtn" data-act="profile" data-id="${p.id}" style="margin:0 4px 4px 0;padding:3px 10px;font-size:12.5px">${esc(pname(p))}</button>`).join('') || '<span class="tiny muted">—</span>'}</td></tr>`; }).join('')}</tbody></table></div>`;
+}
+
+/* ---- modals ---- */
+function renderModal() { const m = S.modal; const box = $('#modal'); if (!m) { box.innerHTML = ''; return; } box.innerHTML = `<div class="mbg" data-act="bg"><div class="modal" role="dialog" aria-modal="true">${m.html()}</div></div>`; }
+const openModal = (html, onSave) => { S.modal = {html, onSave}; renderModal(); setTimeout(() => { const f = $('#modal input:not([type=checkbox]),#modal textarea'); f && f.focus(); }, 30); };
+const closeModal = () => { S.modal = null; renderModal(); };
+const head = t => `<div class="mhead"><h2>${t}</h2><button class="x" data-act="close" aria-label="Close">×</button></div>`;
+const foot = (save, extra) => `<div class="row" style="justify-content:flex-end;margin-top:14px">${extra || ''}<span style="flex:1"></span><button class="btn" data-act="close">Cancel</button><button class="btn pri" data-act="save">${save || 'Save'}</button></div>`;
+const val = id => { const e = $('#' + id); return e ? e.value.trim() : ''; };
+const multi = (cls, opts, sel) => `<div class="rooms">${opts.map(o => `<label class="chipbtn" style="font-weight:600;padding:4px 10px"><input type="checkbox" class="${cls}" value="${esc(o)}" ${(sel || []).includes(o) ? 'checked' : ''}> ${esc(o)}</label>`).join('')}</div>`;
+function personModal(p, selfOnly) {
+  const isNew = !p; p = p ? JSON.parse(JSON.stringify(p)) : {id: 'p' + uid(), first: '', last: '', roles: ['volunteer'], phone: '', email: '', emergency: {name: '', phone: ''}, staff: null, council: null, volunteer: {teams: [], since: TODAY}, clearances: {child_abuse: '', police: '', fbi: ''}, training: '', rooms: [], notes: '', active: true, apps: {}};
+  S.modal = {p, html: () => { const x = S.modal.p; const has = r => x.roles.includes(r);
+    return `${head(isNew ? 'Add a person' : selfOnly ? 'Update my info' : 'Edit ' + esc(x.first))}<div class="stack">
+      <div class="grid2"><label class="f" for="f_first">First name<input id="f_first" value="${esc(x.first)}"></label><label class="f" for="f_last">Last name<input id="f_last" value="${esc(x.last)}"></label></div>
+      <div class="grid2"><label class="f" for="f_phone">Phone<input id="f_phone" value="${esc(x.phone)}" inputmode="tel"></label><label class="f" for="f_email">Email<input id="f_email" value="${esc(x.email)}"></label></div>
+      <div class="grid2"><label class="f" for="f_en">Emergency contact<input id="f_en" value="${esc(x.emergency.name)}"></label><label class="f" for="f_ep">Their phone<input id="f_ep" value="${esc(x.emergency.phone)}"></label></div>
+      ${selfOnly ? '' : `<div class="f"><span>Role</span>${multi('f_role', ['staff', 'council', 'volunteer'], x.roles).replace(/>\s*staff</, '> Staff<').replace(/>\s*council</, '> Council<').replace(/>\s*volunteer</, '> Volunteer<')}</div>
+      ${has('staff') ? `<div class="lbl">Staff</div><div class="grid2"><label class="f" for="s_title">Position<input id="s_title" value="${esc((x.staff || {}).title || '')}"></label><label class="f" for="s_status">Status<select id="s_status">${['Full-time', 'Part-time', 'Contract', 'Seasonal'].map(o => `<option ${o === (x.staff || {}).status ? 'selected' : ''}>${o}</option>`).join('')}</select></label></div><div class="grid3"><label class="f" for="s_hours">Hours / week<input id="s_hours" type="number" min="0" value="${esc((x.staff || {}).hours || '')}"></label><label class="f" for="s_hire">Hired<input id="s_hire" type="date" value="${esc((x.staff || {}).hire || '')}"></label><label class="f" for="s_sup">Reports to<input id="s_sup" value="${esc((x.staff || {}).supervisor || '')}"></label></div><label class="f" for="s_job">Duties<textarea id="s_job" rows="2">${esc((x.staff || {}).job || '')}</textarea></label>` : ''}
+      ${has('council') ? `<div class="lbl">Council</div><div class="grid3"><label class="f" for="c_pos">Position<select id="c_pos">${['President', 'Vice President', 'Secretary', 'Treasurer', 'Director', 'Member'].map(o => `<option ${o === (x.council || {}).position ? 'selected' : ''}>${o}</option>`).join('')}</select></label><label class="f" for="c_ts">Term starts<input id="c_ts" type="date" value="${esc((x.council || {}).term_start || '')}"></label><label class="f" for="c_te">Term ends<input id="c_te" type="date" value="${esc((x.council || {}).term_end || '')}"></label></div><div class="f"><span>Departments they lead</span>${multi('c_dep', DEPTS, (x.council || {}).departments)}</div>` : ''}
+      ${has('volunteer') ? `<div class="lbl">Volunteer</div><div class="f"><span>Teams</span>${multi('v_team', TEAMS, (x.volunteer || {}).teams)}</div>` : ''}
+      <div class="lbl">PA clearances — date issued</div><div class="grid3"><label class="f" for="k_ca">Child Abuse<input id="k_ca" type="date" value="${esc(x.clearances.child_abuse)}"></label><label class="f" for="k_po">State Police<input id="k_po" type="date" value="${esc(x.clearances.police)}"></label><label class="f" for="k_fb">FBI prints<input id="k_fb" type="date" value="${esc(x.clearances.fbi)}"></label></div>
+      <label class="f" for="k_tr">Mandated reporter training<input id="k_tr" type="date" value="${esc(x.training)}"></label>
+      <div class="f"><span>Rooms they work or serve in <span class="tiny muted">(from delcFACILITIES)</span></span>${multi('f_room', ROOMS, x.rooms)}</div>
+      <div class="grid2"><label class="f" for="f_hub">DELC Apps username <span class="tiny muted">(lets them sign in)</span><input id="f_hub" value="${esc(x.hub || '')}" autocapitalize="off" placeholder="e.g. kpope"></label><label class="row small" style="font-weight:600;align-self:end"><input type="checkbox" id="f_mm" ${x.mm ? 'checked' : ''}> On the Mutual Ministry team (manages delcPEOPLE)</label></div>
+      <label class="row small" style="font-weight:600"><input type="checkbox" id="f_act" ${x.active !== false ? 'checked' : ''}> Active</label>
+      <label class="f" for="f_notes">Private notes (Mutual Ministry only)<textarea id="f_notes" rows="2">${esc(x.notes)}</textarea></label>`}
+    </div>${foot(isNew ? 'Add' : 'Save', !isNew && !selfOnly ? '<button class="btn danger" data-act="delPerson">Remove</button>' : '')}`; },
+    onSave: () => { grabPerson(selfOnly); const x = S.modal.p; if (!x.first) { toast('Enter a first name'); return false; } if (!x.roles.length) { toast('Pick at least one role'); return false; } const i = DB.people.findIndex(q => q.id === x.id); if (i >= 0) DB.people[i] = x; else DB.people.push(x); toast('Saved'); return true; }};
+  renderModal();
+}
+function grabPerson(selfOnly) { const x = S.modal.p; Object.assign(x, {first: val('f_first'), last: val('f_last'), phone: val('f_phone'), email: val('f_email'), emergency: {name: val('f_en'), phone: val('f_ep')}}); if (selfOnly) return;
+  x.roles = $$('.f_role:checked').map(c => c.value);
+  if ($('#s_title')) x.staff = {title: val('s_title'), status: val('s_status'), hours: +val('s_hours') || 0, hire: val('s_hire'), supervisor: val('s_sup'), job: val('s_job')}; else if (!x.roles.includes('staff')) x.staff = null;
+  if ($('#c_pos')) x.council = {position: val('c_pos'), term_start: val('c_ts'), term_end: val('c_te'), departments: $$('.c_dep:checked').map(c => c.value)}; else if (!x.roles.includes('council')) x.council = null;
+  if ($$('.v_team').length) x.volunteer = {teams: $$('.v_team:checked').map(c => c.value), since: (x.volunteer || {}).since || TODAY}; else if (!x.roles.includes('volunteer')) x.volunteer = null;
+  x.clearances = {child_abuse: val('k_ca'), police: val('k_po'), fbi: val('k_fb')}; x.training = val('k_tr'); x.rooms = $$('.f_room:checked').map(c => c.value); x.active = $('#f_act').checked; x.hub = val('f_hub').toLowerCase(); x.mm = $('#f_mm').checked; x.notes = val('f_notes'); }
+function goalsModal(r) { const G = JSON.parse(JSON.stringify(r.goals)); S.modal = {G, html: () => `${head('Goals for ' + esc(pname(person(r.person_id))) + ' · ' + r.year)}<div class="tiny muted" style="margin:-6px 0 8px">3–5 goals work best. Say how you’ll know each one is met.</div><div class="stack">${S.modal.G.map((g, i) => `<div class="goal"><label class="f" for="g_t${i}">Goal ${i + 1}<input id="g_t${i}" value="${esc(g.text)}"></label><label class="f" for="g_m${i}" style="margin-top:6px">How we’ll know<input id="g_m${i}" value="${esc(g.measure || '')}"></label><button class="btn sm ghost danger" data-act="goalDel" data-i="${i}" style="margin-top:4px">Remove</button></div>`).join('')}<button class="btn" data-act="goalAdd">+ Add a goal</button></div>${foot('Save goals')}`,
+  onSave: () => { grabGoals(); r.goals = S.modal.G.filter(g => g.text); r.ratings = r.ratings.filter(x => r.goals.some(g => g.id === x.goal)); toast('Goals saved'); return true; }}; renderModal(); }
+function grabGoals() { S.modal.G.forEach((g, i) => { g.text = val('g_t' + i); g.measure = val('g_m' + i); }); }
+function textModal(title, cur, hint, done) { openModal(() => `${head(title)}${hint ? `<div class="tiny muted" style="margin:-6px 0 8px">${hint}</div>` : ''}<textarea id="t_txt" class="inp" rows="7">${esc(cur || '')}</textarea>${foot()}`, () => { done(val('t_txt')); return true; }); }
+
+/* ---- actions ---- */
+let toastT; function toast(t) { let el = $('.toast'); if (!el) { el = document.createElement('div'); el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); } el.textContent = t; clearTimeout(toastT); toastT = setTimeout(() => el.remove(), 2400); }
+const cur = () => DB.reviews.find(r => r.id === S.review) || (S.tab === 'myrev' ? DB.reviews.filter(x => x.person_id === viewer().id).sort((a, b) => b.year - a.year)[0] : null);
+const A = {
+  tab: d => { S.tab = d.v; S.person = null; S.review = null; render(); scrollTo(0, 0); },
+  role: d => { S.role = d.v; render(); },
+  profile: d => { S.person = d.id; S.review = null; render(); scrollTo(0, 0); },
+  back: () => { if (S.review) S.review = null; else S.person = null; render(); },
+  newPerson: () => personModal(null), editPerson: d => personModal(person(d.id)), editSelf: d => personModal(person(d.id), true),
+  delPerson: () => { const x = S.modal.p; x.active = false; const i = DB.people.findIndex(q => q.id === x.id); if (i >= 0) DB.people[i] = {...DB.people[i], active: false}; persist(); closeModal(); render(); toast('Marked inactive — their history is kept'); },
+  openReview: d => { S.review = d.id; render(); scrollTo(0, 0); },
+  newReview: d => { const r = {id: 'r' + uid(), person_id: d.id, year: S.year, status: 'Goals set', goals: [], ratings: [], self: '', checkin: '', summary: ''}; DB.reviews.push(r); persist(); S.review = r.id; render(); goalsModal(r); },
+  startYear: () => { const pool = DB.people.filter(p => p.active !== false && (p.roles.includes('staff') || p.roles.includes('council'))); let n = 0; pool.forEach(p => { if (!DB.reviews.some(r => r.person_id === p.id && r.year === YEAR)) { const last = DB.reviews.filter(r => r.person_id === p.id).sort((a, b) => b.year - a.year)[0]; DB.reviews.push({id: 'r' + uid(), person_id: p.id, year: YEAR, status: 'Goals set', goals: last ? last.goals.map(g => ({...g, id: 'g' + uid()})) : [], ratings: [], self: '', checkin: '', summary: ''}); n++; } }); persist(); S.tab = 'reviews'; S.year = YEAR; render(); toast(n ? `Started ${plural(n, 'review')} — last year’s goals copied in to edit` : 'Everyone already has a review'); },
+  stage: d => { const r = cur(); const i = Math.max(0, Math.min(3, STAGES.indexOf(r.status) + +d.v)); r.status = STAGES[i]; persist(); render(); toast(r.status === 'Rating open' ? 'Ratings opened — council members see it on their list' : 'Moved to ' + r.status); },
+  editGoals: () => goalsModal(cur()),
+  goalAdd: () => { grabGoals(); S.modal.G.push({id: 'g' + uid(), text: '', measure: ''}); renderModal(); },
+  goalDel: d => { grabGoals(); S.modal.G.splice(+d.i, 1); renderModal(); },
+  score: d => { const r = cur(); const me = viewer(); let x = r.ratings.find(y => y.rater === me.id && y.goal === d.g); if (!x) { x = {rater: me.id, goal: d.g, score: 0, comment: '', at: TODAY}; r.ratings.push(x); } x.score = +d.v; x.at = TODAY; const keep = {}; $$('[data-comment]').forEach(e => keep[e.dataset.comment] = e.value); persist(); render(); Object.entries(keep).forEach(([g, v]) => { const e = $(`[data-comment="${g}"]`); if (e) e.value = v; }); },
+  saveRatings: () => { const r = cur(); const me = viewer(); $$('[data-comment]').forEach(e => { const x = r.ratings.find(y => y.rater === me.id && y.goal === e.dataset.comment); if (x) x.comment = e.value.trim(); }); const miss = r.goals.filter(g => !r.ratings.some(x => x.rater === me.id && x.goal === g.id && x.score)).length; persist(); toast(miss ? `Saved — ${plural(miss, 'goal')} still to rate` : 'Thank you — your ratings are saved'); if (!miss) { S.review = null; S.tab = 'rate'; render(); } },
+  editSelfReview: () => { const r = cur(); textModal('My self-review', r.self, 'What went well, what was hard, what you’d like help with next year.', t => { r.self = t; }); },
+  editCheckin: () => { const r = cur(); textModal('Mid-year check-in', r.checkin, 'Notes from the conversation halfway through the year.', t => { r.checkin = t; }); },
+  editSummary: () => { const r = cur(); textModal('Summary from Mutual Ministry', r.summary, 'A few sentences the person will see with their average.', t => { r.summary = t; }); },
+  close: () => closeModal(), bg: (d, e) => { if (e.target.classList.contains('mbg') && downOn === e.target) closeModal(); },
+  save: () => { const m = S.modal; if (m && m.onSave && m.onSave() !== false) { persist(); closeModal(); render(); } },
+  reset: () => { if (S.confirmReset) { DB = seed(); persist(); S.confirmReset = false; S.person = S.review = null; render(); toast('Demo reset'); } else { S.confirmReset = true; toast('Tap “Reset demo” again to start over'); setTimeout(() => { S.confirmReset = false; }, 4000); } }
+};
+let downOn = null; document.addEventListener('mousedown', e => { downOn = e.target; }, true); document.addEventListener('touchstart', e => { downOn = e.target; }, true);
+document.addEventListener('click', e => { const el = e.target.closest('[data-act]'); if (!el) return; const f = A[el.dataset.act]; if (f) { e.preventDefault(); f(el.dataset, e); } });
+document.addEventListener('input', e => { if (e.target.dataset.inp === 'q') { S.q = e.target.value; const pos = e.target.selectionStart; render(); const q = $('#q'); if (q) { q.focus(); q.setSelectionRange(pos, pos); } } });
+document.addEventListener('change', e => { const c = e.target.dataset.chg; if (c === 'as') { S.as = e.target.value; S.person = S.review = null; S.tab = ''; render(); } if (c === 'year') { S.year = +e.target.value; render(); } if (e.target.classList.contains('f_role') && S.modal && S.modal.p) { grabPerson(); renderModal(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.modal) closeModal(); });
+async function loadRooms() { if (!PEOPLE_LIVE) return; try { const r = await fetch(PEOPLE_LIVE.url + '/rest/v1/fac_settings?select=data&id=eq.main', {headers: {apikey: PEOPLE_LIVE.key, Authorization: 'Bearer ' + PEOPLE_LIVE.key}}); const j = await r.json(); const L = j && j[0] && j[0].data && j[0].data.locations; if (Array.isArray(L) && L.length) { ROOMS = L; ROOMS_FROM = 'delcFACILITIES'; render(); } } catch (_) {} }
+
+
+
+
+
+/* ======== live backend (Supabase) + DELC Apps hub sign-in ========
+   LIVE_CFG is null in the demo. The GitHub build sets it, and the app then:
+   - signs in with the DELC Apps hub account (shared-auth.js), single sign-on from the hub
+   - loads every record from one table (<app>_records: id, kind, pos, data) and saves only what changed
+   - checks for other people's changes every 30 seconds and when the tab comes back */
+/* Super admins: these DELC Apps usernames always see every part of delcEDUCATION and delcPEOPLE (director / Mutual Ministry view). */
+const SUPER_ADMINS = ['ddetrich'];
+const isSuper = sess => !!sess && SUPER_ADMINS.includes(String(sess.username || '').toLowerCase());
+const Live = {
+  on: false, sess: null, last: {}, t: null, pending: false, busy: false, err: '', meId: null,
+  hdr(extra) { return Object.assign({apikey: LIVE_CFG.key, Authorization: 'Bearer ' + LIVE_CFG.key, 'Content-Type': 'application/json'}, extra || {}); },
+  rowId(kind, x) { return kind + ':' + LIVE_CFG.keyOf(kind, x); },
+  async fetchAll() {
+    const r = await fetch(`${LIVE_CFG.url}/rest/v1/${LIVE_CFG.table}?select=id,kind,pos,data&order=pos.asc&limit=20000`, {headers: this.hdr()});
+    if (!r.ok) throw new Error('Could not load (' + r.status + ')'); return r.json();
+  },
+  build(L) { const db = {}; LIVE_CFG.kinds.forEach(k => db[k] = []); L.forEach(r => { if (db[r.kind]) db[r.kind].push(r.data); }); return LIVE_CFG.implode ? LIVE_CFG.implode(db) : db; },
+  snap(L) { const m = {}; L.forEach(r => { m[r.id] = r.pos + '|' + JSON.stringify(r.data); }); return m; },
+  rows(db) { const out = {}; if (LIVE_CFG.explode) db = LIVE_CFG.explode(db); LIVE_CFG.kinds.forEach(k => (db[k] || []).forEach((x, i) => { out[this.rowId(k, x)] = {id: this.rowId(k, x), kind: k, pos: i, data: x}; })); return out; },
+  async load() { const L = await this.fetchAll(); this.last = this.snap(L); return this.build(L); },
+  queue() { this.pending = true; this.badge('Saving…'); clearTimeout(this.t); this.t = setTimeout(() => this.flush(), 600); },
+  async flush() {
+    if (this.busy) { this.queue(); return; } this.busy = true;
+    try {
+      const now = this.rows(DB); const up = [], gone = [];
+      Object.values(now).forEach(r => { if (this.last[r.id] !== r.pos + '|' + JSON.stringify(r.data)) up.push(r); });
+      Object.keys(this.last).forEach(id => { if (!now[id]) gone.push(id); });
+      if (LIVE_CFG.merge && up.length) await LIVE_CFG.merge(up, this);
+      const by = this.sess ? this.sess.username : 'unknown'; const at = new Date().toISOString();
+      for (let i = 0; i < up.length; i += 200) {
+        const chunk = up.slice(i, i + 200).map(r => ({id: r.id, kind: r.kind, pos: r.pos, data: r.data, updated_at: at, updated_by: by}));
+        const res = await fetch(`${LIVE_CFG.url}/rest/v1/${LIVE_CFG.table}`, {method: 'POST', headers: this.hdr({Prefer: 'resolution=merge-duplicates,return=minimal'}), body: JSON.stringify(chunk)});
+        if (!res.ok) throw new Error('save ' + res.status + ' ' + (await res.text()).slice(0, 120));
+      }
+      for (let i = 0; i < gone.length; i += 60) {
+        const ids = gone.slice(i, i + 60).map(x => '"' + x.replace(/"/g, '') + '"').join(',');
+        const res = await fetch(`${LIVE_CFG.url}/rest/v1/${LIVE_CFG.table}?id=in.(${encodeURIComponent(ids)})`, {method: 'DELETE', headers: this.hdr({Prefer: 'return=minimal'})});
+        if (!res.ok) throw new Error('delete ' + res.status);
+      }
+      up.forEach(r => { this.last[r.id] = r.pos + '|' + JSON.stringify(r.data); }); gone.forEach(id => { delete this.last[id]; });
+      this.pending = false; this.err = ''; this.badge('Saved ✓', 1800);
+    } catch (e) { console.error(e); this.err = e.message || String(e); this.badge('Not saved — retrying…'); clearTimeout(this.t); this.t = setTimeout(() => this.flush(), 5000); }
+    finally { this.busy = false; }
+  },
+  async poll() {
+    if (!this.on || this.pending || this.busy || document.visibilityState !== 'visible' || S.modal) return;
+    try { const L = await this.fetchAll(); const m = this.snap(L); const a = Object.keys(m), b = Object.keys(this.last);
+      if (a.length === b.length && a.every(k => this.last[k] === m[k])) return;
+      if (this.pending || S.modal) return; this.last = m; const keep = LIVE_CFG.keep ? LIVE_CFG.keep(DB) : {}; DB = Object.assign(this.build(L), keep); if (LIVE_CFG.after) LIVE_CFG.after(); render();
+    } catch (_) {}
+  },
+  badge(txt, hide) { let el = document.getElementById('livebadge'); if (!el) { el = document.createElement('div'); el.id = 'livebadge'; document.body.appendChild(el); } el.textContent = txt; el.className = 'show' + (/Not saved/.test(txt) ? ' bad' : ''); clearTimeout(this._h); if (hide) this._h = setTimeout(() => { el.className = ''; }, hide); }
+};
+function liveCss() { document.head.insertAdjacentHTML('beforeend', `<style id="livecss">
+#livebadge{position:fixed;right:14px;bottom:14px;background:var(--navy);color:#fff;font-size:12.5px;font-weight:700;padding:6px 12px;border-radius:999px;opacity:0;transition:opacity .2s;z-index:90;pointer-events:none}#livebadge.show{opacity:.92}#livebadge.bad{background:var(--bad)}
+.gate{min-height:70vh;display:grid;place-items:center;padding:24px 16px}.gate .card{max-width:400px;width:100%;padding:24px}.gate h1{font-family:var(--display);margin:0 0 4px;font-size:26px}
+.gate .wm{display:inline-flex;background:var(--navy);color:#fff;border-radius:8px;padding:4px 12px;font-family:var(--display);font-weight:800;font-size:20px;margin-bottom:14px}.gate .wm b{color:var(--delc-green)}
+.gate .err{color:var(--bad);font-size:13px;min-height:18px;margin-top:6px}.whois{display:flex;align-items:center;gap:8px;color:#dfe6f2;font-size:13px;flex-wrap:wrap}.whois a,.whois button{color:#fff;background:rgba(255,255,255,.12);border:0;border-radius:8px;padding:5px 10px;font:inherit;font-weight:700;cursor:pointer;text-decoration:none}
+</style>`); }
+function liveGate(msg) {
+  const demo = document.querySelector('.demo'); if (demo) demo.hidden = true;
+  const who = document.querySelector('label.who'); if (who) who.hidden = true; const tabs = document.getElementById('tabs'); if (tabs) tabs.innerHTML = '';
+  $('#app').innerHTML = `<div class="gate"><div class="card"><div class="wm">delc<b>${LIVE_CFG.suffix}</b></div><h1>Sign in</h1><div class="muted small" style="margin-bottom:12px">Use your DELC Apps account — the same username and password as the DELC Apps Hub.</div>
+    ${msg ? `<div class="notice warn" style="margin-bottom:10px">${msg}</div>` : ''}
+    <form id="gateform" class="stack"><label class="f" for="g_u">Username<input id="g_u" autocomplete="username" autocapitalize="off"></label><label class="f" for="g_p">Password<input id="g_p" type="password" autocomplete="current-password"></label>
+    <button class="btn gold" type="submit">Sign in</button><div class="err" id="g_err"></div></form>
+    <div class="tiny muted" style="margin-top:10px"><a href="${LIVE_CFG.hubUrl}">DELC Apps Hub</a></div></div></div>`;
+  $('#gateform').addEventListener('submit', async e => { e.preventDefault(); const u = $('#g_u').value.trim().toLowerCase(), p = $('#g_p').value; const er = m => { $('#g_err').textContent = m; };
+    if (!u || !p) return er('Enter your username and password.'); if (!window.DelcAuth) return er('The sign-in service didn’t load. Check the internet connection and reload.');
+    er('Signing in…'); let res; try { res = await DelcAuth.login(u, p); } catch (_) { res = {ok: false, error: 'Could not reach the sign-in service.'}; }
+    if (!res || !res.ok) return er((res && res.error) || 'That username or password isn’t right.');
+    const s = res.session || DelcAuth.getSession(); if (!DelcAuth.hasAppAccess(s, LIVE_CFG.appKey)) return er(`Your account doesn’t have ${LIVE_CFG.appName} yet. Ask an admin to turn it on in the Admin Portal.`);
+    liveStart(s); });
+}
+async function liveStart(sess) {
+  Live.sess = sess; $('#app').innerHTML = '<div class="card empty" style="margin-top:20px">Loading…</div>';
+  try { DB = Object.assign(await Live.load(), LIVE_CFG.keep ? LIVE_CFG.keep({}) : {}); } catch (e) { $('#app').innerHTML = `<div class="card empty" style="margin-top:20px">Couldn’t reach the database: ${esc(e.message)}. <button class="btn sm" onclick="location.reload()">Try again</button></div>`; return; }
+  if (LIVE_CFG.firstRun) await LIVE_CFG.firstRun(sess);
+  const id = LIVE_CFG.identify(sess);
+  if (!id) { liveGate(`You’re signed in as <b>${esc(sess.displayName || sess.username)}</b>, but your username isn’t on a record in ${LIVE_CFG.appName} yet. ${LIVE_CFG.linkHelp}`); return; }
+  S.as = id.as; Live.meId = id.me || null; Live.on = true;
+  const demo = document.querySelector('.demo'); if (demo) demo.hidden = true;
+  const who = document.querySelector('label.who'); if (who) { who.hidden = false; who.outerHTML = `<div class="whois"><span>👤 ${esc(sess.displayName || sess.username)}${id.super ? ' <span style="background:var(--delc-green);color:#13240a;border-radius:6px;padding:1px 6px;font-size:11px;font-weight:800">Super admin</span>' : ''}</span><a href="${LIVE_CFG.hubUrl}">Apps</a><button type="button" id="liveout">Sign out</button></div>`; }
+  const out = document.getElementById('liveout'); if (out) out.addEventListener('click', () => { if (!confirm('Sign out? This also signs you out of the DELC Apps Hub on this device.')) return; try { DelcAuth.clearSession(); } catch (_) {} location.reload(); });
+  if (LIVE_CFG.after) LIVE_CFG.after(); render(); if (LIVE_CFG.started) LIVE_CFG.started();
+  setInterval(() => Live.poll(), 30000); document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') Live.poll(); });
+  window.addEventListener('beforeunload', e => { if (Live.pending) { e.preventDefault(); e.returnValue = ''; } });
+}
+async function liveBoot(demoInit) {
+  if (!LIVE_CFG || /[?&]demo\b/.test(location.search)) { demoInit(); return; }
+  liveCss(); let s = null; try { s = window.DelcAuth && DelcAuth.getSession(); } catch (_) {}
+  if (s && DelcAuth.refreshSession) { try { await DelcAuth.refreshSession(); s = DelcAuth.getSession(); } catch (_) {} }
+  if (s && DelcAuth.hasAppAccess(s, LIVE_CFG.appKey)) liveStart(s); else liveGate(s ? `You’re signed in to the hub as <b>${esc(s.username)}</b>, but that account doesn’t have ${LIVE_CFG.appName}. Ask an admin to turn it on, or sign in as someone else.` : '');
+}
+/* ---- delcPEOPLE live settings (the GitHub build fills in https://ksdxhqyusaylfpyeecbv.supabase.co/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzZHhocXl1c2F5bGZweWVlY2J2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1NTE1NDgsImV4cCI6MjEwNDEyNzU0OH0.6HI0XWmlIfzyVy0iRH2GkAVNqYIZQwMeNhr4drTOUNo; the demo leaves LIVE_CFG null) ---- */
+const LIVE_CFG = 'https://ksdxhqyusaylfpyeecbv.supabase.co'.startsWith('http') ? {
+  url: 'https://ksdxhqyusaylfpyeecbv.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzZHhocXl1c2F5bGZweWVlY2J2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1NTE1NDgsImV4cCI6MjEwNDEyNzU0OH0.6HI0XWmlIfzyVy0iRH2GkAVNqYIZQwMeNhr4drTOUNo', appKey: 'people', appName: 'delcPEOPLE', suffix: 'PEOPLE', table: 'people_records', hubUrl: 'https://delcdata.github.io/DELCAppsHub/',
+  kinds: ['people', 'reviews', 'ratings'], keyOf: (k, x) => k === 'ratings' ? x.review + '|' + x.rater + '|' + x.goal : x.id, keep: () => ({v: 1}),
+  linkHelp: 'Ask Mutual Ministry to add your DELC Apps username to your record in delcPEOPLE.',
+  identify(sess) { const u = String(sess.username || '').toLowerCase(); const p = DB.people.find(x => x.active !== false && String(x.hub || '').toLowerCase() === u);
+    const mm = p && (p.mm || (p.council && (p.council.departments || []).includes('Mutual & People')));
+    if (isSuper(sess)) return {as: 'mm', me: p ? p.id : null, super: true};
+    if (mm) return {as: 'mm', me: p.id}; if (p) return {as: p.id, me: p.id};
+    /* a hub admin with no record only manages the app until someone on the Mutual Ministry team is linked (first setup) */
+    if (sess.isAdmin && !DB.people.some(x => x.active !== false && x.hub && (x.mm || (x.council && (x.council.departments || []).includes('Mutual & People'))))) return {as: 'mm'}; return null; },
+  /* each council member's score is its own record, so two people rating the same review at once never overwrite each other */
+  explode(db) { const ratings = []; const reviews = (db.reviews || []).map(r => { (r.ratings || []).forEach(x => ratings.push({...x, review: r.id})); const c = {...r}; delete c.ratings; return c; }); return {...db, reviews, ratings}; },
+  implode(db) { const by = {}; (db.ratings || []).forEach(x => { const c = {...x}; delete c.review; (by[x.review] = by[x.review] || []).push(c); }); db.reviews.forEach(r => { r.ratings = by[r.id] || []; }); delete db.ratings; return db; },
+  after() { PEOPLE_LIVE = {url: LIVE_CFG.url, key: LIVE_CFG.key}; },
+  started() { S.tab = ''; render(); loadRooms(); }
+} : null;
+const _persistDemo = persist;
+persist = function () { if (Live.on) { MEM = DB; Live.queue(); return; } if (LIVE_CFG && !Live.on) return; _persistDemo(); };
+const _renderWhoDemo = renderWho; renderWho = function () { if (Live.on) return; _renderWhoDemo(); };
+/* first launch: bring council members (and their departments) over from delcBOARD */
+const _viewPeopleLive = viewPeople;
+viewPeople = function () { let h = _viewPeopleLive(); if (Live.on && isMM() && !DB.people.some(p => (p.roles || []).includes('council'))) h = `<div class="notice info" style="margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="flex:1;min-width:200px">Council members and the departments they direct are already in <b>delcBOARD</b>. Bring them over instead of typing them in.</span><button class="btn gold sm" data-act="importBoard">Add council from delcBOARD</button></div>` + h; return h; };
+A.importBoard = async () => {
+  try { const g = t => fetch(`${LIVE_CFG.url}/rest/v1/${t}`, {headers: Live.hdr()}).then(r => { if (!r.ok) throw new Error(t + ' ' + r.status); return r.json(); });
+    const [M, D] = await Promise.all([g('board_members?select=id,name,title,email,phone,active,body_ids'), g('board_departments?select=id,name,director_ids,active')]);
+    let n = 0; M.filter(m => m.active !== false && (m.body_ids || []).includes('council')).forEach(m => {
+      const parts = String(m.name || '').trim().split(/\s+/); const first = parts.shift() || ''; const last = parts.join(' ');
+      if (DB.people.some(p => (p.first + ' ' + p.last).trim().toLowerCase() === String(m.name || '').trim().toLowerCase())) return;
+      const deps = D.filter(d => d.active !== false && (d.director_ids || []).includes(m.id)).map(d => d.name);
+      const pos = /president/i.test(m.title || '') ? (/vice/i.test(m.title) ? 'Vice President' : 'President') : /secretary/i.test(m.title || '') ? 'Secretary' : /treasurer/i.test(m.title || '') ? 'Treasurer' : deps.length ? 'Director' : 'Member';
+      DB.people.push({id: 'p' + uid(), first, last, roles: ['council'], phone: m.phone || '', email: m.email || '', emergency: {name: '', phone: ''}, staff: null, council: {position: pos, term_start: '', term_end: '', departments: deps}, volunteer: null, clearances: {child_abuse: '', police: '', fbi: ''}, training: '', rooms: [], notes: '', active: true, apps: {board: 'Council member in delcBOARD'}, from_board: m.id}); n++; });
+    persist(); render(); toast(n ? `Added ${n} council member${n === 1 ? '' : 's'} from delcBOARD` : 'Everyone on council is already here');
+  } catch (e) { toast('Couldn’t read delcBOARD: ' + (e.message || e)); }
+};
+const _viewDashLive = viewDash;
+viewDash = function () { const h = _viewDashLive(); if (!Live.on || DB.people.length) return h; return `<div class="notice info" style="margin-bottom:12px"><b>Getting started:</b> open <b>People</b> and bring council over from delcBOARD, then add staff and volunteers. Put each person’s DELC Apps username on their record so they can sign in — and tick <b>On the Mutual Ministry team</b> for the people who manage this app. <button class="btn sm gold" data-act="tab" data-v="people" style="margin-left:6px">Go to People</button></div>` + h; };
+
+liveBoot(() => { persist(); render(); loadRooms(); });
+</script>
+
+</body>
+</html>
