@@ -720,6 +720,65 @@ A.importBoard = async () => {
 const _viewDashLive = viewDash;
 viewDash = function () { const h = _viewDashLive(); if (!Live.on || DB.people.length) return h; return `<div class="notice info" style="margin-bottom:12px"><b>Getting started:</b> open <b>People</b> and bring council over from delcBOARD, then add staff and volunteers. Put each person’s DELC Apps username on their record so they can sign in — and tick <b>On the Mutual Ministry team</b> for the people who manage this app. <button class="btn sm gold" data-act="tab" data-v="people" style="margin-left:6px">Go to People</button></div>` + h; };
 
+/* ======== Private notes & comments (2026-11-13) ========
+   Kept in their own table (people_notes) — never on the shared person record — so no other DELC app receives them.
+   Seen and edited only by the Executive Committee, the Pastor, the Mutual Ministry director and super admins, and never on your own profile. */
+(function () { const st = document.createElement('style'); st.textContent = `
+.pn{margin-top:14px}.pn-add{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px}.pn-add textarea{flex:1;min-width:220px;font:inherit;padding:8px 10px;border:1px solid var(--line,#d5dbe5);border-radius:10px;resize:vertical}
+.pn-item{border-top:1px solid var(--line,#e3e7ee);padding:10px 0}.pn-meta{font-size:12.5px;color:var(--muted,#667);display:flex;gap:6px;flex-wrap:wrap;align-items:center}.pn-meta b{color:var(--navy,#1B3254)}
+.pn-body{white-space:pre-wrap;margin:4px 0 6px;font-size:14.5px;overflow-wrap:anywhere}.pn-btns{display:flex;gap:6px}`; document.head.appendChild(st); })();
+const noteRole = v => !!v && v.active !== false && !!(v.ec || /pastor/i.test([v.title, (v.staff || {}).title].join(' ')) || (v.council && (v.council.departments || []).includes('Mutual & People')));
+function canNotes() { if (Live.on) return isSuper(Live.sess) || noteRole(Live.meId && person(Live.meId)); if (LIVE_CFG) return false; return isMM() || noteRole(viewer()); }
+const noteSelf = p => Live.on ? Live.meId === p.id : !!(viewer() && viewer().id === p.id);
+const Notes = {
+  list: [], ready: false, err: '', draft: {},
+  url(q) { return LIVE_CFG.url + '/rest/v1/people_notes' + (q || ''); },
+  all() { return Live.on ? this.list : (DB.pnotes || []); },
+  of(p) { const k = 'people:' + p.id; return this.all().filter(n => n.person_id === k).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))); },
+  me() { const v = Live.on ? (Live.meId && person(Live.meId)) : viewer(); return {author: Live.on ? String(Live.sess.username || '') : 'demo', author_name: v ? pname(v) : (Live.on ? (Live.sess.displayName || Live.sess.username) : 'Mutual Ministry')}; },
+  async call(method, q, body, prefer) { const r = await fetch(this.url(q), {method, headers: Live.hdr(prefer ? {Prefer: prefer} : {}), body: body ? JSON.stringify(body) : undefined}); if (!r.ok) throw new Error(method + ' ' + r.status + ' ' + (await r.text()).slice(0, 100)); return r; },
+  async load() { if (!Live.on || !canNotes()) return false;
+    try { const L = await (await this.call('GET', '?select=*&order=created_at.desc&limit=5000')).json(); const ch = !this.ready || JSON.stringify(L) !== JSON.stringify(this.list); this.list = L; this.ready = true; this.err = ''; return ch; }
+    catch (e) { const ch = !this.err; this.err = 'The notes couldn’t be loaded. Check the connection and reload.'; this.ready = true; console.error(e); return ch; } },
+  async add(p, body) { const at = new Date().toISOString(); const n = {id: 'n' + uid() + uid().slice(0, 3), person_id: 'people:' + p.id, body, ...this.me(), created_at: at, updated_at: at, edited_by: null};
+    if (!Live.on) { (DB.pnotes = DB.pnotes || []).push(n); persist(); return; } await this.call('POST', '', n, 'return=minimal'); this.list.unshift(n); },
+  async edit(id, body) { const n = this.all().find(x => x.id === id); if (!n) return; const patch = {body, updated_at: new Date().toISOString(), edited_by: this.me().author_name};
+    if (Live.on) await this.call('PATCH', '?id=eq.' + encodeURIComponent(id), patch, 'return=minimal'); Object.assign(n, patch); if (!Live.on) persist(); },
+  async del(id) { if (Live.on) { await this.call('DELETE', '?id=eq.' + encodeURIComponent(id), null, 'return=minimal'); this.list = this.list.filter(x => x.id !== id); } else { DB.pnotes = (DB.pnotes || []).filter(x => x.id !== id); persist(); } }
+};
+const noteWhen = s => { const d = new Date(s); return isNaN(d) ? '' : d.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'}) + ' · ' + d.toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit'}); };
+function notesSection(p) {
+  const L = Notes.of(p); const wait = Live.on && !Notes.ready;
+  return `<section class="card private pn" id="pnotes"><div class="sec"><h2>🔒 Private notes &amp; comments</h2><span class="tiny muted">${L.length ? plural(L.length, 'note') : ''}</span></div>
+    <div class="tiny muted" style="margin:-4px 0 10px">Only the Executive Committee, the Pastor and the Mutual Ministry director can see or edit these. They stay inside delcPEOPLE — no other DELC app shows them, and ${esc(p.first)} can’t see them.</div>
+    ${Notes.err ? `<div class="notice warn" style="margin-bottom:10px">${esc(Notes.err)}</div>` : ''}
+    <div class="pn-add"><textarea id="pn_new" rows="2" data-pn="${p.id}" aria-label="New note" placeholder="Add a note or comment about ${esc(p.first)}…">${esc(Notes.draft[p.id] || '')}</textarea><button class="btn pri" data-act="pnAdd" data-id="${p.id}">Add note</button></div>
+    ${wait ? '<div class="small muted">Loading notes…</div>' : L.map(n => `<div class="pn-item"><div class="pn-meta"><b>${esc(n.author_name || n.author || 'Someone')}</b><span>${esc(noteWhen(n.created_at))}</span>${n.edited_by ? `<span>· edited by ${esc(n.edited_by)} ${esc(noteWhen(n.updated_at))}</span>` : ''}</div><div class="pn-body">${esc(n.body)}</div><div class="pn-btns"><button class="btn sm" data-act="pnEdit" data-id="${n.id}">Edit</button><button class="btn sm ghost" data-act="pnDel" data-id="${n.id}" style="color:var(--bad)">Delete</button></div></div>`).join('') || '<div class="small muted">No notes yet.</div>'}
+  </section>`;
+}
+document.addEventListener('input', e => { const k = e.target.dataset && e.target.dataset.pn; if (k) Notes.draft[k] = e.target.value; });
+const noteFail = e => { console.error(e); toast('That didn’t save — check the connection and try again'); };
+A.pnAdd = async d => { const p = person(d.id); const t = ($('#pn_new') ? $('#pn_new').value : '').trim(); if (!p || !canNotes()) return; if (!t) { toast('Type the note first'); const f = $('#pn_new'); f && f.focus(); return; }
+  try { await Notes.add(p, t); Notes.draft[p.id] = ''; render(); toast('Note added'); } catch (e) { noteFail(e); } };
+A.pnEdit = d => { const n = Notes.all().find(x => x.id === d.id); if (!n || !canNotes()) return; let next = null;
+  textModal('Edit note', n.body, 'Your name and the time are added as “edited by”.', t => { next = t; });
+  const m = S.modal; const done = m.onSave; m.onSave = () => { done(); if (!next || !next.trim()) { toast('A note can’t be empty — use Delete to remove it'); return false; } Notes.edit(n.id, next.trim()).then(() => { render(); toast('Note updated'); }).catch(noteFail); }; };
+A.pnDel = async d => { if (!canNotes() || !confirm('Delete this note? This can’t be undone.')) return; try { await Notes.del(d.id); render(); toast('Note deleted'); } catch (e) { noteFail(e); } };
+/* profile: the old single "Private notes" box is replaced by the log */
+const _viewProfilePN = viewProfile;
+viewProfile = function (p) { let h = _viewProfilePN(p); if (!p) return h;
+  h = h.replace(/<section class="card private"><div class="sec"><h2>Private notes<\/h2>[\s\S]*?<\/section>/, '');
+  if (canNotes() && !noteSelf(p)) h += notesSection(p); return h; };
+const _personModalPN = personModal;
+personModal = function (p, selfOnly) { _personModalPN(p, selfOnly); const m = S.modal; if (!m || !m.html) return; const inner = m.html;
+  m.html = () => inner().replace(/<label class="f" for="f_notes">[\s\S]*?<\/label>/, ''); renderModal(); };
+/* people who can read notes need a way to reach other people's profiles */
+const _tabsPN = tabs; tabs = function () { const T = _tabsPN(); if (canNotes() && !T.some(t => t[0] === 'people')) T.unshift(['people', 'Directory']); return T; };
+/* refresh notes when a profile is opened, and with the 30-second check */
+const _profilePN = A.profile; A.profile = d => { _profilePN(d); if (Live.on && canNotes()) Notes.load().then(ch => { if (ch && S.person === d.id && !S.modal) render(); }); };
+if (LIVE_CFG) { const _startedPN = LIVE_CFG.started; LIVE_CFG.started = function () { _startedPN.call(LIVE_CFG); if (canNotes()) { Notes.load().then(ch => { if (ch && !S.modal) render(); });
+  setInterval(() => { if (document.visibilityState !== 'visible' || S.modal || !S.person) return; Notes.load().then(ch => { if (ch && !S.modal) render(); }); }, 30000); } }; }
+
 liveBoot(() => { persist(); render(); loadRooms(); });
 </script>
 
