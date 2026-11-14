@@ -805,7 +805,71 @@ const _profilePN = A.profile; A.profile = d => { _profilePN(d); if (Live.on && c
 if (LIVE_CFG) { const _startedPN = LIVE_CFG.started; LIVE_CFG.started = function () { _startedPN.call(LIVE_CFG); if (canNotes()) { Notes.load().then(ch => { if (ch && !S.modal) render(); });
   setInterval(() => { if (document.visibilityState !== 'visible' || S.modal || !S.person) return; Notes.load().then(ch => { if (ch && !S.modal) render(); }); }, 30000); } }; }
 
-liveBoot(() => { persist(); render(); loadRooms(); });
+/* ======== Keys from delcFACILITIES (Derek, 2026-11-14) — read only; keys are assigned in delcFACILITIES ▸ Keys ======== */
+const FAC_URL = 'https://delcdata.github.io/delcFACILITIES/';
+let KEYS = {keys: [], holders: [], at: 0, loaded: false};
+async function loadKeys(force) {
+  if (!PEOPLE_LIVE) { if (!KEYS.loaded) { const ps = DB.people.filter(p => p.active !== false); KEYS = {loaded: true, at: Date.now(), keys: [{id: 'k1', name: 'Main Door Key', tag: 'A', opens: 'Front doors / most doors'}, {id: 'k2', name: 'Office Key', tag: 'O', opens: 'Office'}],
+      holders: ps.slice(0, 2).map((p, i) => ({id: 'h' + i, name: pname(p), person_id: p.id, status: 'Active', group_name: '', keys: [{key_id: 'k1', issued: '2026-01-05'}].concat(i ? [] : [{key_id: 'k2', issued: '2026-01-05'}])}))}; } return; }
+  if (!force && KEYS.loaded && Date.now() - KEYS.at < 60000) return;
+  try {
+    const h = {apikey: PEOPLE_LIVE.key, Authorization: 'Bearer ' + PEOPLE_LIVE.key};
+    const [a, b] = await Promise.all([fetch(PEOPLE_LIVE.url + '/rest/v1/fac_keys?select=id,name,tag,opens', {headers: h}), fetch(PEOPLE_LIVE.url + '/rest/v1/fac_key_holders?select=id,name,status,keys,group_name,person_id,confirmed_at', {headers: h})]);
+    if (!a.ok || !b.ok) throw new Error('keys ' + a.status + '/' + b.status);
+    KEYS = {keys: await a.json(), holders: await b.json(), at: Date.now(), loaded: true}; render();
+  } catch (e) { console.warn('delcFACILITIES keys', e); }
+}
+const keyOut = h => h && !/returned|lost/i.test(h.status || '') && (h.keys || []).length;
+/* the person id in Facilities is "people:<id>"; in this app a person's id is <id> */
+const holdersOf = p => KEYS.holders.filter(h => keyOut(h) && (h.person_id === 'people:' + p.id || h.person_id === p.id));
+const keyById = id => KEYS.keys.find(k => k.id === id) || {name: 'Key', tag: ''};
+const keyNames = p => holdersOf(p).flatMap(h => h.keys.map(k => keyById(k.key_id).name));
+function keysCard(p) {
+  const H = holdersOf(p);
+  const rows = H.flatMap(h => h.keys.map(k => { const K = keyById(k.key_id); return `<div class="list-item"><span><b>${esc(K.name)}</b>${K.tag ? ` <span class="chip">${esc(K.tag)}</span>` : ''}${k.copy ? ` <span class="tiny muted">copy ${esc(k.copy)}</span>` : ''}${K.opens ? `<div class="tiny muted">Opens: ${esc(K.opens)}</div>` : ''}${h.group_name ? `<div class="tiny muted">Held for ${esc(h.group_name)}</div>` : ''}</span><span class="tiny muted">${k.issued ? 'Issued ' + fmt(k.issued) : ''}</span></div>`; })).join('');
+  return `<section class="card"><div class="sec"><h2>🔑 Keys</h2><a class="btn sm" href="${FAC_URL}" target="_blank" rel="noopener" style="text-decoration:none">Manage in delcFACILITIES ↗</a></div>
+    ${rows || `<div class="small muted">${KEYS.loaded ? 'No church keys signed out to them.' : 'Loading keys…'}</div>`}<div class="tiny muted" style="margin-top:6px">From delcFACILITIES ▸ Keys. Keys are given out, returned or reported lost there.</div></section>`;
+}
+function keysSummary() {
+  const out = KEYS.holders.filter(keyOut);
+  const byKey = KEYS.keys.map(K => ({K, who: out.filter(h => h.keys.some(k => k.key_id === K.id))})).filter(x => x.who.length);
+  const name = h => { const p = DB.people.find(x => h.person_id === 'people:' + x.id || h.person_id === x.id); return p ? `<button class="linkbtn" data-act="profile" data-id="${p.id}">${esc(pname(p))}</button>` : `${esc(h.name)} <span class="tiny muted">(not in delcPEOPLE)</span>`; };
+  return `<div class="card" style="margin-bottom:12px"><div class="sec"><h2>🔑 Keys signed out</h2><span class="tiny muted">${out.length} ${out.length === 1 ? 'person holds' : 'people hold'} keys</span><span style="flex:1"></span><a class="btn sm" href="${FAC_URL}" target="_blank" rel="noopener" style="text-decoration:none">Manage in delcFACILITIES ↗</a></div>
+    ${byKey.map(({K, who}) => `<div class="list-item"><span><b>${esc(K.name)}</b>${K.tag ? ` <span class="chip">${esc(K.tag)}</span>` : ''}${K.opens ? `<div class="tiny muted">${esc(K.opens)}</div>` : ''}</span><span class="small" style="text-align:right">${who.map(name).join(', ')}</span></div>`).join('') || `<div class="small muted">${KEYS.loaded ? 'No keys are signed out.' : 'Loading…'}</div>`}</div>`;
+}
+const _viewPeopleK = viewPeople;
+viewPeople = function () {
+  loadKeys(); const mm = isMM();
+  if (S.role !== 'keys') { let h = _viewPeopleK();
+    if (mm) h = h.replace(`<button class="chipbtn ${S.role === 'volunteer' ? 'on' : ''}" data-act="role" data-v="volunteer">Volunteers</button>`, m => m + `<button class="chipbtn" data-act="role" data-v="keys">🔑 Key holders</button>`)
+      .replace(/(<tr class="click" data-act="profile" data-id="([^"]+)"><td><div class="row"[^>]*>(?:(?!<\/b>).)*<\/b>)/g, (m, all, id) => { const p = DB.people.find(x => x.id === id); const n = p ? keyNames(p) : []; return n.length ? m + ` <span title="Keys: ${esc(n.join(', '))}" aria-label="Holds keys">🔑</span>` : m; });
+    return h; }
+  if (!mm) { S.role = 'all'; return _viewPeopleK(); }
+  const save = S.role; S.role = 'all'; let h = _viewPeopleK(); S.role = save;
+  const ids = new Set(DB.people.filter(p => keyNames(p).length).map(p => p.id));
+  h = h.replace(/<tr class="click" data-act="profile" data-id="([^"]+)">[\s\S]*?<\/tr>/g, (m, id) => ids.has(id) ? m.replace(/(<\/b>)/, `$1 <span aria-label="Holds keys">🔑</span>`) : '')
+    .replace(/<button class="chipbtn on" data-act="role" data-v="all">/, '<button class="chipbtn" data-act="role" data-v="all">')
+    .replace(`data-act="role" data-v="volunteer">Volunteers</button>`, m => m + `<button class="chipbtn on" data-act="role" data-v="keys">🔑 Key holders</button>`)
+    .replace(/<span class="muted">\d+ shown<\/span>/, `<span class="muted">${ids.size} shown</span>`)
+    .replace('<div class="card scroll"', keysSummary() + '<div class="card scroll"');
+  return h;
+};
+const _viewProfileK = viewProfile;
+viewProfile = function (p) {
+  let h = _viewProfileK(p); if (!p) return h; loadKeys();
+  const self = viewer() && viewer().id === p.id;
+  if (isMM() || self) { const at = '<section class="card"><div class="sec"><h2>Across the DELC apps</h2>';
+    h = h.includes(at) ? h.replace(at, keysCard(p) + at) : h.replace(/(<div class="prof">)/, '$1' + keysCard(p));
+    h = h.replace(' Keys they hold are kept in delcFACILITIES ▸ Keys.', ''); }
+  return h;
+};
+(function () { const st = document.createElement('style'); st.textContent = `
+  .f input[type=checkbox],.f input[type=radio],.chipbtn input[type=checkbox],.chipbtn input[type=radio],label.row input[type=checkbox]{width:auto;min-width:0;padding:0;margin:0;border:0;border-radius:3px;background:none;flex:none;width:17px;height:17px;accent-color:var(--navy,#1B3254);vertical-align:middle}
+  .chipbtn:has(input[type=checkbox]){display:inline-flex;align-items:center;gap:7px;cursor:pointer}
+  .chipbtn:has(input:checked){border-color:currentColor;box-shadow:inset 0 0 0 1px currentColor}
+  .linkbtn{border:0;background:none;padding:0;color:var(--navy,#1B3254);font:inherit;font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:2px}`; document.head.appendChild(st); })();
+
+liveBoot(() => { persist(); render(); loadRooms(); loadKeys(true); });
 
 /* ---- printed staff review (2026-11-14): Mutual Ministry any time; the staff member once it's complete. Individual council scores are never printed. ---- */
 function canPrintReview(r) { const me = viewer(); return !!r && (isMM() || (me && me.id === r.person_id && r.status === 'Complete')); }
