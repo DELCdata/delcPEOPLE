@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script src="https://delcdata.github.io/DELCAppsHub/delc-kit.js?v=2"></script>
 <script src="https://delcdata.github.io/DELCAppsHub/shared-auth.js?v=3"></script>
 <title>delcPEOPLE</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -157,6 +158,10 @@ textarea.copy{width:100%;min-height:200px;font-family:ui-monospace,Menlo,Consola
 .appcard b{display:block;font-size:13px}.appcard .tiny{display:block}
 .private{border-left:4px solid var(--gold)}
 .chip.ec{background:#efe7f8;color:#5b2d91;font-weight:700}
+
+/* shared header buttons (2026-11-14) — same look in every delcAPP; delc-kit.js carries the full rule, this is the fallback */
+.delc-hbtn{background:rgba(255,255,255,.12);border:0;color:#fff;border-radius:8px;padding:5px 11px;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap;cursor:pointer}.delc-hbtn.pri{background:#fff;color:#1B3254}
+header.bar .brand b{font-size:19px!important}@media(max-width:520px){header.bar .brand small{display:none}}
 </style>
 </head>
 <body>
@@ -523,7 +528,7 @@ function liveGate(msg) {
   $('#app').innerHTML = `<div class="gate"><div class="card"><div class="wm">delc<b>${LIVE_CFG.suffix}</b></div><h1>Sign in</h1><div class="muted small" style="margin-bottom:12px">Use your DELC Apps account — the same username and password as the DELC Apps Hub.</div>
     ${msg ? `<div class="notice warn" style="margin-bottom:10px">${msg}</div>` : ''}
     <form id="gateform" class="stack"><label class="f" for="g_u">Username<input id="g_u" autocomplete="username" autocapitalize="off"></label><label class="f" for="g_p">Password<input id="g_p" type="password" autocomplete="current-password"></label>
-    <button class="btn gold" type="submit">Sign in</button><div class="err" id="g_err"></div></form>
+    <button class="btn pri" type="submit">Sign in</button><div class="err" id="g_err"></div></form>
     <div class="tiny muted" style="margin-top:10px"><a href="${LIVE_CFG.hubUrl}">DELC Apps Hub</a></div></div></div>`;
   $('#gateform').addEventListener('submit', async e => { e.preventDefault(); const u = $('#g_u').value.trim().toLowerCase(), p = $('#g_p').value; const er = m => { $('#g_err').textContent = m; };
     if (!u || !p) return er('Enter your username and password.'); if (!window.DelcAuth) return er('The sign-in service didn’t load. Check the internet connection and reload.');
@@ -540,7 +545,7 @@ async function liveStart(sess) {
   if (!id) { liveGate(`You’re signed in as <b>${esc(sess.displayName || sess.username)}</b>, but your username isn’t on a record in ${LIVE_CFG.appName} yet. ${LIVE_CFG.linkHelp}`); return; }
   S.as = id.as; Live.meId = id.me || null; Live.on = true;
   const demo = document.querySelector('.demo'); if (demo) demo.hidden = true;
-  const who = document.querySelector('label.who'); if (who) { who.hidden = false; who.outerHTML = `<div class="whois"><span>👤 ${esc(sess.displayName || sess.username)}${id.super ? ' <span style="background:var(--delc-green);color:#13240a;border-radius:6px;padding:1px 6px;font-size:11px;font-weight:800">Super admin</span>' : ''}</span><a href="${LIVE_CFG.hubUrl}">Apps</a><button type="button" id="liveout">Sign out</button></div>`; }
+  const who = document.querySelector('label.who'); if (who) { who.hidden = false; who.outerHTML = `<div class="whois"><span>${esc(sess.displayName || sess.username)}${id.super ? ' <span style="background:var(--delc-green);color:#13240a;border-radius:6px;padding:1px 6px;font-size:11px;font-weight:800">Super admin</span>' : ''}</span><a class="delc-hbtn" href="${LIVE_CFG.hubUrl}">Apps</a><button type="button" class="delc-hbtn" id="liveout">Sign out</button></div>`; }
   const out = document.getElementById('liveout'); if (out) out.addEventListener('click', () => { if (!confirm('Sign out? This also signs you out of the DELC Apps Hub on this device.')) return; try { DelcAuth.clearSession(); } catch (_) {} location.reload(); });
   if (LIVE_CFG.after) LIVE_CFG.after(); render(); if (LIVE_CFG.started) LIVE_CFG.started();
   setInterval(() => Live.poll(), 30000); document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') Live.poll(); });
