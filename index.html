@@ -857,6 +857,7 @@ viewPeople = function () {
 const _viewProfileK = viewProfile;
 viewProfile = function (p) {
   let h = _viewProfileK(p); if (!p) return h; loadKeys();
+  if (isMM() && PEOPLE_LIVE) h = h.replace(/(<h1 style="font-size:26px">[^<]*<\/h1>)/, `$1<span class="delc-changed" data-t="people_records" data-id="people:${esc(p.id)}"></span>`);
   const self = viewer() && viewer().id === p.id;
   if (isMM() || self) { const at = '<section class="card"><div class="sec"><h2>Across the DELC apps</h2>';
     h = h.includes(at) ? h.replace(at, keysCard(p) + at) : h.replace(/(<div class="prof">)/, '$1' + keysCard(p));
