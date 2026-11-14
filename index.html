@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<script src="https://delcdata.github.io/DELCAppsHub/delc-kit.js?v=3"></script>
+<script src="https://delcdata.github.io/DELCAppsHub/delc-kit.js?v=4"></script>
 <script src="https://delcdata.github.io/DELCAppsHub/shared-auth.js?v=3"></script>
 <title>delcPEOPLE</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -165,6 +165,24 @@ header.bar .brand b{font-size:19px!important}@media(max-width:520px){header.bar 
 
 /* no gold (2026-11-14) */
 @media (prefers-color-scheme:dark){.role-council{background:#3a1d2e;color:#f0a6cf}.chip.gold{color:#c9d6ea}.btn.gold{background:#2c4f86;border-color:#2c4f86}}
+body:has(.gate) header.bar,body:has(.gate) nav.tabs{display:none!important}
+.delc-signin-card form .btn{width:100%;justify-content:center;text-align:center;padding:12px!important;font-size:15px!important}
+
+/* one sign-in card in every delcAPP (2026-11-14) */
+.delc-signin-card{max-width:400px!important;width:100%;border-radius:16px!important;padding:28px 26px!important;box-shadow:0 8px 30px rgba(27,50,84,.08)!important;text-align:left}
+.delc-signin-top{text-align:center;margin-bottom:12px}
+.delc-signin-top .delc-logo{display:block;width:220px;max-width:85%;height:auto;margin:0 auto 12px}
+.delc-signin-top .wm,.delc-signin-top .delc-wm{font-size:20px!important;margin:0!important}
+.delc-signin-top h1{font-family:var(--delc-display,inherit);font-size:26px!important;font-weight:800;margin:12px 0 4px!important;letter-spacing:-.01em;text-align:center}
+.delc-signin-top .sub{font-size:13.5px;line-height:1.45;color:#5d6a82}
+.delc-signin-top .sub b{display:block;font-weight:600;color:#33415a;margin-bottom:2px}
+.delc-signin-links{display:flex;flex-direction:column;align-items:center;gap:9px;margin-top:16px;padding-top:14px;border-top:1px solid #e3e8f0}
+.delc-signin-links a,.delc-signin-links button{font:inherit;font-size:13px!important;font-weight:700;color:#1B3254;background:none;border:0;padding:0;text-decoration:underline;text-underline-offset:2px;cursor:pointer;text-align:center}
+.delc-signin-links .sec{font-weight:500;color:#5d6a82}
+@media (prefers-color-scheme:dark){.delc-signin-top .delc-logo{background:#fff;border-radius:10px;padding:8px}.delc-signin-top .sub{color:#9aa7bd}.delc-signin-top .sub b{color:#c9d3e3}.delc-signin-links{border-top-color:#2a3750}.delc-signin-links a,.delc-signin-links button{color:#9fc0ea}.delc-signin-links .sec{color:#9aa7bd}}
+.gate .wm{margin-bottom:0!important}
+/* tab standard (reference app) */
+.tabs button:hover{color:#fff!important;background:none!important}
 </style>
 </head>
 <body>
@@ -528,11 +546,11 @@ function liveCss() { document.head.insertAdjacentHTML('beforeend', `<style id="l
 function liveGate(msg) {
   const demo = document.querySelector('.demo'); if (demo) demo.hidden = true;
   const who = document.querySelector('label.who'); if (who) who.hidden = true; const tabs = document.getElementById('tabs'); if (tabs) tabs.innerHTML = '';
-  $('#app').innerHTML = `<div class="gate"><div class="card"><div class="wm">delc<b>${LIVE_CFG.suffix}</b></div><h1>Sign in</h1><div class="muted small" style="margin-bottom:12px">Use your DELC Apps account — the same username and password as the DELC Apps Hub.</div>
+  $('#app').innerHTML = `<div class="gate"><div class="card delc-signin-card"><div class="delc-signin-top">${window.DELC?DELC.logoImg():''}<div class="wm">delc<b>${LIVE_CFG.suffix}</b></div><h1>Sign in</h1><div class="sub"><b>Mutual Ministry — staff, council and volunteers</b>Use your DELC Apps account — the same username (or email) and password as the DELC Apps Hub.</div></div>
     ${msg ? `<div class="notice warn" style="margin-bottom:10px">${msg}</div>` : ''}
-    <form id="gateform" class="stack"><label class="f" for="g_u">Username<input id="g_u" autocomplete="username" autocapitalize="off"></label><label class="f" for="g_p">Password<input id="g_p" type="password" autocomplete="current-password"></label>
+    <form id="gateform" class="stack"><label class="f" for="g_u">Username or email<input id="g_u" autocomplete="username" autocapitalize="off" placeholder="e.g. ddetrich"></label><label class="f" for="g_p">Password<input id="g_p" type="password" autocomplete="current-password"></label>
     <button class="btn pri" type="submit">Sign in</button><div class="err" id="g_err"></div></form>
-    <div class="tiny muted" style="margin-top:10px"><a href="${LIVE_CFG.hubUrl}">DELC Apps Hub</a></div></div></div>`;
+    <div class="delc-signin-links"><a href="${LIVE_CFG.hubUrl}">DELC Apps Hub</a></div></div></div>`;
   $('#gateform').addEventListener('submit', async e => { e.preventDefault(); const u = $('#g_u').value.trim().toLowerCase(), p = $('#g_p').value; const er = m => { $('#g_err').textContent = m; };
     if (!u || !p) return er('Enter your username and password.'); if (!window.DelcAuth) return er('The sign-in service didn’t load. Check the internet connection and reload.');
     er('Signing in…'); let res; try { res = await DelcAuth.login(u, p); } catch (_) { res = {ok: false, error: 'Could not reach the sign-in service.'}; }
