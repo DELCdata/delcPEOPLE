@@ -806,6 +806,37 @@ if (LIVE_CFG) { const _startedPN = LIVE_CFG.started; LIVE_CFG.started = function
   setInterval(() => { if (document.visibilityState !== 'visible' || S.modal || !S.person) return; Notes.load().then(ch => { if (ch && !S.modal) render(); }); }, 30000); } }; }
 
 liveBoot(() => { persist(); render(); loadRooms(); });
+
+/* ---- printed staff review (2026-11-14): Mutual Ministry any time; the staff member once it's complete. Individual council scores are never printed. ---- */
+function canPrintReview(r) { const me = viewer(); return !!r && (isMM() || (me && me.id === r.person_id && r.status === 'Complete')); }
+function printReview(r) {
+  if (!canPrintReview(r)) return; const p = person(r.person_id); const D = window.DELC; const showScores = isMM() || r.status === 'Complete';
+  const cids = councilIds().filter(id => id !== r.person_id); const ra = reviewAvg(r);
+  const goals = r.goals.map((g, i) => { const a = goalAvg(r, g.id); return `<div class="goal"><div class="gh"><b>${i + 1}. ${esc(g.text)}</b>${showScores && a ? `<span class="sc">${a} · ${esc(SCORE[Math.round(a)] || '')}</span>` : ''}</div>${g.measure ? `<div class="sm">How we’ll know: ${esc(g.measure)}</div>` : ''}</div>`; }).join('') || '<p class="sm">No goals were set.</p>';
+  const block = (t, x, empty) => `<h2>${t}</h2><div class="txt">${x ? esc(x) : `<span class="sm">${empty}</span>`}</div>`;
+  const title = `${r.year} Staff review`;
+  const w = window.open('', '_blank'); if (!w) { toast('Allow pop-ups for this site to print'); return; }
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(pname(p))} — ${title}</title><style>${D ? D.printCss : ''}
+    body{font-family:"Figtree","Segoe UI",Helvetica,Arial,sans-serif;color:#18233a;margin:0;font-size:11pt;line-height:1.4}@page{margin:.55in}
+    h2{font-size:12pt;color:#1B3254;margin:16px 0 6px;border-bottom:1.5px solid #1B3254;padding-bottom:2px;break-after:avoid}
+    .goal{padding:6px 0;border-bottom:1px solid #dbe1ea;break-inside:avoid}.gh{display:flex;justify-content:space-between;gap:12px}.sc{white-space:nowrap;font-weight:700;color:#1B3254}
+    .sm{font-size:9.5pt;color:#5d6a82}.txt{white-space:pre-wrap}.avg{font-size:12pt;font-weight:700;margin:4px 0}.stage{font-size:10pt;color:#333}
+    .sig{display:grid;grid-template-columns:1fr 1fr;gap:26px 30px;margin-top:30px;break-inside:avoid}.sig div{border-top:1px solid #333;padding-top:3px;font-size:9pt;color:#5d6a82}</style></head><body>
+    ${D ? D.letterhead({title, sub: pname(p) + (p.staff && p.staff.title ? ' — ' + p.staff.title : ''), right: 'Confidential —<br>Mutual Ministry'}) : '<h1>' + esc(title) + '</h1>'}
+    <div class="stage">Status: <b>${esc(r.status)}</b>${showScores && ra ? ` &nbsp;·&nbsp; Rated by ${ratersDone(r).length} of ${cids.length} council members` : ''}</div>
+    <h2>Goals</h2>${goals}
+    ${block(esc(p.first) + '’s self-review', r.self, 'Not written.')}
+    ${block('Mid-year check-in', r.checkin, 'No notes.')}
+    ${showScores ? `<h2>Summary from Mutual Ministry</h2>${ra ? `<div class="avg">${ra} average — ${esc(SCORE[Math.round(ra)] || '')}</div>` : ''}<div class="txt">${r.summary ? esc(r.summary) : '<span class="sm">Written when the review is complete.</span>'}</div>` : ''}
+    <div class="sm" style="margin-top:10px">Scale: 1 Needs improvement · 2 Developing · 3 Meets expectations · 4 Exceeds · 5 Outstanding</div>
+    <div class="sig"><div>${esc(pname(p))} (staff member)</div><div>Date</div><div>Mutual Ministry</div><div>Date</div><div>Pastor</div><div>Date</div></div>
+    ${D ? D.footer('delcPEOPLE', 'Staff review — confidential') : ''}
+    <script>window.onload=function(){setTimeout(function(){window.focus();window.print();},300)}<\/script></body></html>`);
+  w.document.close();
+}
+A.printReview = () => { const r = cur(); if (r) printReview(r); };
+const _viewReviewPr = viewReview;
+viewReview = function (r) { const h = _viewReviewPr(r); return canPrintReview(r) && canSeeReview(r) ? h.replace('<button class="btn sm ghost" data-act="back">← Back</button></div>', '<button class="btn sm ghost" data-act="back">← Back</button> <button class="btn sm" data-act="printReview" style="margin-left:6px">🖨 Print</button></div>') : h; };
 </script>
 
 </body>
