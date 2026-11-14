@@ -896,7 +896,7 @@ function printReview(r) {
     <div class="sig"><div>${esc(pname(p))} (staff member)</div><div>Date</div><div>Mutual Ministry</div><div>Date</div><div>Pastor</div><div>Date</div></div>
     ${D ? D.footer('delcPEOPLE', 'Staff review — confidential') : ''}
     <script>window.onload=function(){setTimeout(function(){window.focus();window.print();},300)}<\/script></body></html>`);
-  w.document.close();
+  w.document.close();if(window.DELC&&DELC.repeatPages)DELC.repeatPages(w.document);
 }
 A.printReview = () => { const r = cur(); if (r) printReview(r); };
 const _viewReviewPr = viewReview;
